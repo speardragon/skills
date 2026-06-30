@@ -1,0 +1,31 @@
+{
+  "name": "cdragon",
+  "version": "0.1.0",
+  "description": "Symlink this repo's agent skills into a project's or your global .claude/skills or .agents/skills",
+  "bin": {
+    "cdragon": "bin/cdragon.js"
+  },
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin",
+    "src",
+    "skills"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "skills",
+    "agent-skills",
+    "cli",
+    "symlink"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/speardragon/skills.git"
+  },
+  "homepage": "https://github.com/speardragon/skills#readme",
+  "license": "MIT"
+}
