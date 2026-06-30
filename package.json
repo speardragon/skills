@@ -1,6 +1,6 @@
 {
   "name": "cdragon",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Symlink this repo's agent skills into a project's or your global .claude/skills or .agents/skills",
   "bin": {
     "cdragon": "bin/cdragon.js"
