@@ -8,9 +8,19 @@ const pkg = require('../package.json')
 const c = require('../src/colors')
 const prompt = require('../src/prompt')
 const { SKILLS_DIR, discoverSkills } = require('../src/skills')
-const { linkSkills } = require('../src/link')
+const { linkSkills, isInstalledIn } = require('../src/link')
 
 const truncate = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
+
+// Split skills into ordered, non-empty groups by where they came from.
+function groupBySource(skills) {
+  return [
+    { key: 'mine', label: 'My skills' },
+    { key: 'installed', label: 'External' },
+  ]
+    .map((g) => ({ ...g, items: skills.filter((s) => s.source === g.key) }))
+    .filter((g) => g.items.length)
+}
 
 function parseArgs(args) {
   const opts = { scope: null, folders: [], all: false, skills: [], yes: false }
@@ -66,9 +76,12 @@ function listSkills() {
     return
   }
   const width = Math.max(...skills.map((s) => s.name.length))
-  console.log(`\n${c.bold(`Skills (${skills.length})`)}  ${c.dim(SKILLS_DIR)}\n`)
-  for (const s of skills) {
-    console.log(`  ${c.cyan(s.name.padEnd(width))}  ${c.dim(truncate(s.description, 80))}`)
+  console.log(`\n${c.bold(`Skills (${skills.length})`)}  ${c.dim(SKILLS_DIR)}`)
+  for (const group of groupBySource(skills)) {
+    console.log(`\n  ${c.bold(group.label)} ${c.dim(`(${group.items.length})`)}`)
+    for (const s of group.items) {
+      console.log(`    ${c.cyan(s.name.padEnd(width))}  ${c.dim(truncate(s.description, 74))}`)
+    }
   }
   console.log('')
 }
@@ -96,6 +109,8 @@ async function linkCommand(opts) {
   }
   if (!folders.length) throw new Error('No target folder selected.')
 
+  const base = scope === 'global' ? os.homedir() : process.cwd()
+
   // 3. Skills: all, named, or interactively picked.
   let chosen
   if (opts.all) {
@@ -107,15 +122,24 @@ async function linkCommand(opts) {
       return found
     })
   } else {
-    const picked = await prompt.multiselect(
-      'Which skills to link?',
-      skills.map((s) => ({ label: `${s.name}  ${c.dim(truncate(s.description, 56))}`, value: s.name }))
-    )
+    const choices = []
+    for (const group of groupBySource(skills)) {
+      choices.push({ header: true, label: `${group.label} (${group.items.length})` })
+      for (const s of group.items) {
+        // Pre-check skills already linked into the chosen target.
+        const installed = isInstalledIn(s, base, folders)
+        const tag = installed ? c.dim(' (linked)') : ''
+        choices.push({
+          value: s.name,
+          checked: installed,
+          label: `${s.name}  ${c.dim(truncate(s.description, 56))}${tag}`,
+        })
+      }
+    }
+    const picked = await prompt.multiselect('Which skills to link?', choices)
     chosen = picked.map((name) => skills.find((s) => s.name === name))
   }
   if (!chosen.length) throw new Error('No skills selected.')
-
-  const base = scope === 'global' ? os.homedir() : process.cwd()
 
   // Summary + confirm.
   console.log('')

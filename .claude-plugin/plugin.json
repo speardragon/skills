@@ -7,6 +7,9 @@
   "skills": [
     "./skills/agent-browser",
     "./skills/grill-me",
+    "./skills/gws-sheets",
+    "./skills/gws-sheets-append",
+    "./skills/gws-sheets-read",
     "./skills/herdr-agent",
     "./skills/herdr-cli",
     "./skills/notion-presentation",

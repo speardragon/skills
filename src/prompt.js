@@ -68,23 +68,33 @@ function select(message, choices) {
 }
 
 // Multi-choice checkbox list. Resolves an array of selected `value`s.
+// A choice with `{ header: true }` renders as a non-selectable group label
+// and is skipped during navigation.
 function multiselect(message, choices) {
   requireTTY()
   return new Promise((resolve) => {
-    let index = 0
-    const selected = new Set()
+    const selectable = choices.map((c, i) => (c.header ? -1 : i)).filter((i) => i >= 0)
+    // Pre-check any choice flagged `checked` (e.g. already installed).
+    const selected = new Set(selectable.filter((i) => choices[i].checked))
     const totalLines = choices.length + 1
+    let pos = 0 // index into `selectable`
     let drawn = false
+
+    const cursor = () => selectable[pos]
 
     const draw = () => {
       let out = drawn ? `\x1b[${totalLines}A` : ''
       const hint = c.dim('(↑↓ move · space toggle · a all · enter confirm)')
       out += `\x1b[2K${c.cyan('?')} ${c.bold(message)} ${hint}\n`
       choices.forEach((choice, i) => {
-        const active = i === index
+        if (choice.header) {
+          out += `\x1b[2K  ${c.bold(choice.label)}\n`
+          return
+        }
+        const active = i === cursor()
         const box = selected.has(i) ? c.green('◉') : '◯'
         const pointer = active ? c.cyan('❯') : ' '
-        out += `\x1b[2K${pointer} ${box} ${active ? c.cyan(choice.label) : choice.label}\n`
+        out += `\x1b[2K  ${pointer} ${box} ${active ? c.cyan(choice.label) : choice.label}\n`
       })
       process.stdout.write(out)
       drawn = true
@@ -93,17 +103,18 @@ function multiselect(message, choices) {
     const onKey = (str, key) => {
       if (!key) return
       if (key.name === 'up' || key.name === 'k') {
-        index = (index - 1 + choices.length) % choices.length
+        pos = (pos - 1 + selectable.length) % selectable.length
         draw()
       } else if (key.name === 'down' || key.name === 'j') {
-        index = (index + 1) % choices.length
+        pos = (pos + 1) % selectable.length
         draw()
       } else if (key.name === 'space' || str === ' ') {
-        selected.has(index) ? selected.delete(index) : selected.add(index)
+        const i = cursor()
+        selected.has(i) ? selected.delete(i) : selected.add(i)
         draw()
       } else if (key.name === 'a') {
-        if (selected.size === choices.length) selected.clear()
-        else choices.forEach((_, i) => selected.add(i))
+        if (selected.size === selectable.length) selected.clear()
+        else selectable.forEach((i) => selected.add(i))
         draw()
       } else if (key.name === 'return') {
         teardown(onKey)

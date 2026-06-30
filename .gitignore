@@ -1,3 +1,5 @@
 DEPLOY.txt
 node_modules/
 *.tgz
+.claude
+.agents

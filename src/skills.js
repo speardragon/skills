@@ -7,6 +7,19 @@ const path = require('node:path')
 // location so `cdragon` finds them no matter where it's invoked.
 const SKILLS_DIR = path.resolve(__dirname, '..', 'skills')
 
+// skills-lock.json (managed by the `skills` CLI) is the manifest of skills
+// pulled from external sources. Anything not listed there is authored locally.
+const LOCK_PATH = path.resolve(SKILLS_DIR, '..', 'skills-lock.json')
+
+function installedSkillNames() {
+  try {
+    const lock = JSON.parse(fs.readFileSync(LOCK_PATH, 'utf8'))
+    return new Set(Object.keys(lock.skills || {}))
+  } catch {
+    return new Set()
+  }
+}
+
 // Parse the YAML frontmatter of a SKILL.md into a flat key/value map.
 // Handles plain `key: value` and block scalars (`>`, `|`) used for long
 // descriptions, collapsing them into a single line.
@@ -55,6 +68,7 @@ function discoverSkills(dir) {
     return []
   }
 
+  const installed = installedSkillNames()
   const skills = []
   for (const entry of entries) {
     if (!entry.isDirectory()) continue
@@ -66,6 +80,7 @@ function discoverSkills(dir) {
       name: entry.name,
       dir: path.join(dir, entry.name),
       description: fm.description || '',
+      source: installed.has(entry.name) ? 'installed' : 'mine',
     })
   }
 
