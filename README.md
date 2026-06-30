@@ -91,6 +91,27 @@ cdragon --global --both tdd grill-me     # ~/.claude, ~/.agents 양쪽에 일부
 
 이미 존재하는 **실제 디렉터리**는 덮어쓰지 않고 건너뜁니다. 같은 대상을 가리키는 심링크는 그대로 두고, 다른 곳을 가리키면 다시 연결합니다.
 
+### 개발
+
+레포 루트에서 한 번 `npm link` 해두면, 이후 코드 수정은 재링크 없이 바로 반영됩니다.
+
+```bash
+npm link        # 최초 1회
+```
+
+### 배포
+
+스킬을 추가했거나 CLI를 수정했다면 버전을 올려 다시 배포합니다. **버전을 올리지 않으면 `npm publish`가 거부됩니다** (같은 버전 재배포 불가).
+
+```bash
+npm version patch          # 0.1.0 → 0.1.1 (버그픽스) — 커밋+태그 자동 생성
+# npm version minor        # 0.1.0 → 0.2.0 (기능 추가)
+git push --follow-tags     # 커밋과 태그를 함께 푸시
+npm publish --access public  # 게시 (보안키/OTP 인증)
+```
+
+`npm version`이 `package.json` 버전 변경·커밋·git 태그를 한 번에 처리합니다. 사용자는 `npm i -g cdragon@latest`로 갱신합니다.
+
 ## Getting Started
 
 ```bash
