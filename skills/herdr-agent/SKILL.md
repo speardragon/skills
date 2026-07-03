@@ -1,13 +1,13 @@
 ---
 name: herdr-agent
-description: 'Spawn a coding agent (claude / codex / any) into a new herdr location — a new tab, a pane split, or a new workspace — then wait until it is ready (agent_status idle). Use when running inside herdr (HERDR_ENV=1) and the user asks to open/launch/spawn an agent: "launch claude", "one more codex", "split next to me and run claude", "codex in a new workspace".'
+description: 'Spawn a coding agent (claude / codex / any) into a new herdr location — a new tab, a pane split, or a new workspace — and delegate a task to run asynchronously. By default the parent does NOT block: it dispatches the task marked as agent-delegated, passes along its own identity (pane id, agent, workspace), and ends its turn. The spawned agent does NOT report back on its own — it works, then waits for the human manager at its pane to approve completion, asks whether to notify the parent, and only then types the report into the parent''s pane and submits it (re-triggering the parent). Use when running inside herdr (HERDR_ENV=1) and the user asks to open/launch/spawn an agent or offload work: "launch claude", "one more codex", "split next to me and run claude", "codex in a new workspace", "have a codex fix X".'
 ---
 
 # herdr-agent — spawning agents in herdr
 
-A skill for spawning a coding agent (claude / codex / anything else) into a new location inside herdr and **confirming it is ready**. Low-level herdr control is handled by the `herdr-cli` skill; this skill layers an "agent spawn" workflow on top of it.
+A skill for spawning a coding agent (claude / codex / anything else) into a new location inside herdr and **handing it a task to run on its own**. Low-level herdr control is handled by the `herdr-cli` skill; this skill layers an "agent spawn" workflow on top of it.
 
-**The core is simple: pick a location → start the agent → wait until idle → report.** Extra configuration like auto mode and rc is not part of the main flow — it lives in the [appendix](#appendix--extra-configuration) (only when the user explicitly asks).
+**Default flow: pick a location → start the agent → delegate the task (marked as agent-delegated, carrying your identity + a human-gated callback protocol) → return immediately (don't block).** The spawned agent does not report back on its own: it works, waits for the human manager at its pane to approve, asks whether to notify you, and only then types the result into your pane — re-triggering you. If there's no task (the user just wants an agent open), fall back to spawning and confirming idle. Extra configuration like auto mode and rc is not part of the main flow — it lives in the [appendix](#appendix--extra-configuration) (only when the user explicitly asks).
 
 ## Main flow
 
@@ -28,15 +28,18 @@ Always determine your own location via `$HERDR_PANE_ID`. `focused:true` is the p
 
 Extract from natural language. Use defaults when unspecified.
 
-| Item                | Value                                | Default    |
-| ------------------- | ------------------------------------ | ---------- |
-| Target              | new tab / pane split / new workspace | new tab    |
-| Agent               | claude / codex / other               | claude     |
-| Count               | N                                    | 1          |
-| Split direction     | right / down                         | right      |
-| cwd (new workspace) | path                                 | rule below |
+| Item                | Value                                | Default        |
+| ------------------- | ------------------------------------ | -------------- |
+| Target              | new tab / pane split / new workspace | new tab        |
+| Agent               | claude / codex / other               | claude         |
+| Count               | N                                    | 1              |
+| Split direction     | right / down                         | right          |
+| cwd (new workspace) | path                                 | rule below     |
+| **Task**            | what the child should do             | none → just open |
 
-Examples: "one more claude" → claude in a new tab / "split next to me and run codex" → codex in a split right / "two claudes in a new workspace" → workspace ×2.
+Examples: "split next to me and have codex check the translation" → codex in a split right, task = check the translation / "one more claude" → claude in a new tab, no task / "two claudes in a new workspace to run the migration" → workspace ×2, task each.
+
+**Capture your own pane id now: `PARENT=$HERDR_PANE_ID`** (from step 0). That's where each child will report back when its task is done.
 
 **New-workspace cwd**: if a path is given, use it as-is. If not, default to the current cwd — but "new workspace" usually means a different project, so **if ambiguous, ask a one-line follow-up**.
 
@@ -60,58 +63,82 @@ NEW_PANE=$(herdr workspace create --cwd "$CWD" --no-focus \
   | python3 -c 'import sys,json; print(json.load(sys.stdin)["result"]["root_pane"]["pane_id"])')
 ```
 
-### 3. Start the agent and wait until idle — the core
+### 3. Hand off the task and return — the core (async by default)
 
-Use herdr's `agent_status` as the primary ready signal (not the on-screen text). A new pane is an empty shell, so it reads `unknown`; the moment you start the agent and herdr detects it, it becomes `idle`. This primary check is the same regardless of agent type.
+The default assumption: the agent is spawned **to do a task**, and you should **not block** until it finishes. You wait only long enough to deliver the task, hand it the task plus your identity and a human-gated callback protocol, then end your turn. Crucially, the child **does not report back on its own** — it works, then waits, and only reports to you **after the human manager at its pane approves** (and after asking first). This keeps a human in the loop before a delegated result re-triggers you.
 
-> Caution: **`idle` means "not streaming / not working", not "the main prompt is ready to accept input".** First-run prompts like login / model selection / trust-folder confirmation may be on screen yet still look idle to herdr. So after reaching idle, read the screen once to check for a known blocker and report it (below).
+`agent_status` is the ready signal (not on-screen text). A new pane reads `unknown`; once the agent starts, herdr marks it `idle`. You wait for `idle` **only to deliver the task**, not for the task to complete.
 
 ```bash
-herdr pane run "$NEW_PANE" "claude"   # or "codex", etc.
+PARENT="$HERDR_PANE_ID"                                   # from step 0 — who delegated (callback target)
+# Capture your identity so it travels with the task (agent kind, workspace, cwd):
+eval "$(herdr pane get "$PARENT" | python3 -c 'import sys,json;p=json.load(sys.stdin)["result"]["pane"];print("PARENT_AGENT=%s\nPARENT_WS=%s\nPARENT_CWD=%s"%(p.get("agent") or "agent",p.get("workspace_id") or "",p.get("cwd") or ""))')"
+herdr pane run "$NEW_PANE" "claude"                       # or "codex", etc.
 herdr wait agent-status "$NEW_PANE" --status idle --timeout 30000
-echo "exit=$?"
-herdr pane read "$NEW_PANE" --source visible --lines 20   # check for known blockers after idle
+herdr pane read "$NEW_PANE" --source visible --lines 20   # check for first-run blockers
 ```
 
-- **exit 0 + no blocker on screen → ready.** Done. (If claude's default mode is auto, it comes up in auto as-is.)
-- **If a first-run prompt (login / model selection / trust folder, etc.) is on screen** → don't guess and press keys; **report the facts** and hand off to the user. Most of the time it's already configured, so this rarely actually blocks.
-- **On timeout (exit 1) → do not guess and press keys.** Read that tab further with `--source recent-unwrapped` to see what is blocking, and report the facts.
+> Caution: **`idle` means "not working", not "prompt ready for input".** First-run prompts (login / model selection / trust folder) can look idle. If one is on screen you can't deliver the task — **don't guess keys; report it and hand to the user.**
+
+If the child is ready, deliver the task with the delegation header + human-gated callback protocol using `herdr pane run` (the same mechanism `herdr-agent-run-and-wait` uses — it types the prompt into the running agent and submits it, multi-line safe). Then **return immediately — do not wait for completion:**
+
+```bash
+herdr pane run "$NEW_PANE" "<the task, in natural language>
+
+[DELEGATED TASK — assigned by another AGENT, not a human]
+Delegated by: ${PARENT_AGENT} in herdr pane ${PARENT} (workspace ${PARENT_WS}, cwd ${PARENT_CWD}).
+
+Handoff protocol — follow exactly:
+1. State up front, to the human at this pane, that this task was delegated by the parent agent above.
+2. Do the task. Do NOT contact or report to the parent on your own — run no '${PARENT}' commands yet.
+3. When you believe you're finished, STOP and wait. Do not report.
+4. Only when the human manager here explicitly says it is complete/approved, ask them: '부모 에이전트(pane ${PARENT})에게 완료 보고를 전달할까요?'
+5. Only if the manager confirms, report back exactly once by running:
+     herdr pane run ${PARENT} \"[\$HERDR_PANE_ID done] <one-line result>\"
+   (this types the report into the parent's pane and submits it with Enter). If the manager says no, do not contact the parent."
+```
+
+> Quoting: `${PARENT}`, `${PARENT_AGENT}`, `${PARENT_WS}`, `${PARENT_CWD}` expand **here** (your identity travels with the task); `\$HERDR_PANE_ID` stays **literal** so the child fills in its own pane id when it reports. `herdr pane run <pane> "<text>"` delivers a prompt to a running agent and submits it — that's how the child receives the task and, later, how it types the report into your pane. After sending, your turn ends; the child works, waits for its human's approval, and only then re-triggers you.
+
+**No-task case** — if the user only wants an agent open ("split a claude next to me") with nothing to run, skip the task delivery: confirm `idle`, check for blockers, report it ready. That's the whole job.
+
+**On timeout** (idle never reached) → don't guess keys. Read further and report what's blocking.
 
 ```bash
 herdr pane read "$NEW_PANE" --source recent-unwrapped --lines 30   # diagnose on timeout
 ```
 
-> `wait agent-status` is level-triggered, so if it's already idle it returns immediately. A new pane is `unknown` right before launch, so this is safe. **Always start in a new pane** (reusing an existing agent pane can mistake its prior idle for the new one).
+> `wait agent-status` is level-triggered, so an already-idle pane returns immediately. **Always start in a new pane** so a prior idle isn't mistaken for this one.
 
 ### 4. Report — a simple list
 
 One line per spawned agent. No tables, no verbose logs, no links.
 
 ```
-- w1K:p9 (tab) — claude · idle ✓
-- w1K:pA (split right) — codex · idle ✓
+- w1K:pA (split right) — codex · task delegated, reports back after its manager approves ↩
+- w1K:p9 (tab) — claude · idle ✓ (no task)
 - w2A:p1 (new workspace /path/to/proj) — claude · ⚠ timeout (screen: login prompt)
 ```
 
-For any that didn't reach idle, state on that line what was blocking, factually. Don't kill it or retry endlessly. If you applied extra configuration (auto/rc), append the result as a single token too (e.g. `· auto ✓`).
+Then your turn ends. **The callback is human-gated: it lands in your pane only after that child's manager approves it** — as a new message like `[w1K:pA done] translation checked, 3 fixes`. Pick up from there when it arrives; don't expect it the moment the task finishes. For any agent that couldn't be handed its task (blocker/timeout), state what was blocking, factually; don't kill it or retry endlessly. If you applied extra configuration (auto/rc), append the result as a single token too (e.g. `· auto ✓`).
 
-### Beyond spawning — hand off to herdr-cli
+### Synchronous mode — wait for the task inline (opt-in)
 
-This skill ends at "spawned and idle". If the request goes further than spawning — sending a task prompt to the spawned agent, reading its output, or waiting for that task to complete (e.g. "split next to me, run codex, and have it check the translation") — that is the `herdr-cli` skill's job. See its **`wait for an agent task to complete`** section (the `herdr-agent-run-and-wait` helper, which sends a prompt and safely waits for `working → idle/done`) and the **`spawn a new agent and give it a task`** recipe, which chains the full flow end to end.
+The default is async (callback). Only when the user explicitly wants you to **wait and bring the result back in the same turn** ("기다려서 받아와", "block until it's done") use the `herdr-cli` skill instead of the callback footer: its `herdr-agent-run-and-wait` helper sends the prompt and safely waits for `working → idle/done`, then you read the pane and report. Fine for short tasks; prefer the async default for anything long.
 
 ## Core principles
 
-- Determine your own location only via `$HERDR_PANE_ID` (never `focused`).
+- Determine your own location only via `$HERDR_PANE_ID` (never `focused`) — and capture it as `PARENT` so children can report back to you.
 - Always re-parse ids from the response (don't assume they stay stable after compaction).
-- The primary ready check is `agent_status idle`; after that, read the screen once to check only for first-run blockers (idle ≠ guaranteed ready for input).
+- Wait for `agent_status idle` only to deliver the task; after that, read the screen once for first-run blockers (idle ≠ ready for input).
 - If blocked, don't guess and press keys — read the tab and report.
-- Scope is spawning to idle. For anything past that (task prompt, output, completion wait), use the `herdr-cli` skill.
+- **Default is async + human-gated:** hand off the task with your identity and the delegation/callback protocol, then return. Mark the task as agent-delegated, pass your pane id + info, and instruct the child to report back **only after its human manager approves** (asking first, then typing into your pane and submitting). The child must not contact you before that. Block inline only when the user asks (see Synchronous mode).
 
 ---
 
 ## Appendix — extra configuration
 
-The main flow ends at "start and confirm idle". Below is claude-only extra configuration, applied **only when the user explicitly requests it**. (Other agents like codex don't have these concepts — starting them is all there is.)
+The main flow ends at "task dispatched" (or "idle" for the no-task case). Below is claude-only extra configuration, applied **only when the user explicitly requests it**. (Other agents like codex don't have these concepts — starting them is all there is.) When you do apply auto/rc, do it after the agent is idle and before sending the task.
 
 ### Changing auto mode (claude only)
 
