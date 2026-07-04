@@ -3,17 +3,16 @@
 const fs = require('node:fs')
 const path = require('node:path')
 
-// The skills live next to this CLI, in <repo>/skills. Resolved from the install
-// location so `cdragon` finds them no matter where it's invoked.
-const SKILLS_DIR = path.resolve(__dirname, '..', 'skills')
+const { resolveSkillsDir } = require('./source')
 
 // skills-lock.json (managed by the `skills` CLI) is the manifest of skills
 // pulled from external sources. Anything not listed there is authored locally.
-const LOCK_PATH = path.resolve(SKILLS_DIR, '..', 'skills-lock.json')
-
-function installedSkillNames() {
+// Read relative to the skills dir in use, since that may be the bundled repo
+// checkout or the self-managed mirror (see src/source.js).
+function installedSkillNames(skillsDir) {
+  const lockPath = path.resolve(skillsDir, '..', 'skills-lock.json')
   try {
-    const lock = JSON.parse(fs.readFileSync(LOCK_PATH, 'utf8'))
+    const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'))
     return new Set(Object.keys(lock.skills || {}))
   } catch {
     return new Set()
@@ -68,7 +67,7 @@ function discoverSkills(dir) {
     return []
   }
 
-  const installed = installedSkillNames()
+  const installed = installedSkillNames(dir)
   const skills = []
   for (const entry of entries) {
     if (!entry.isDirectory()) continue
@@ -87,4 +86,4 @@ function discoverSkills(dir) {
   return skills.sort((a, b) => a.name.localeCompare(b.name))
 }
 
-module.exports = { SKILLS_DIR, discoverSkills, parseFrontmatter }
+module.exports = { resolveSkillsDir, discoverSkills, parseFrontmatter }
