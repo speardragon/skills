@@ -1,0 +1,26 @@
+{
+  "skill_name": "unknowns",
+  "evals": [
+    {
+      "id": 0,
+      "eval_name": "vague-taste-request",
+      "prompt": "우리 앱 홈 화면이 좀 밋밋한 것 같은데, 더 있어보이게 개선해줘. 알아서 잘 부탁해.",
+      "expected_output": "곧바로 코드를 고치지 않고, 취향(unknown knowns) 프로브를 선택: 서로 실제로 다른 2-4개 디자인 방향(HTML 목업 등)을 만들어 반응을 요청하거나, 최소한 방향 옵션을 제시. 취향에 대한 개방형 인터뷰 남발 금지.",
+      "files": []
+    },
+    {
+      "id": 1,
+      "eval_name": "small-precise-request",
+      "prompt": "src/components/ui/BookCover.tsx에서 img의 loading 속성이 'lazy'로 하드코딩돼 있는데, prop으로 받아서 기본값 'lazy'로 바꿔줘. 사용처는 안 바꿔도 돼.",
+      "expected_output": "의식 없이 바로 수행. 인터뷰, 계획 문서, 블라인드스팟 패스 등 unknowns 기법을 일절 발동하지 않아야 함(weight 0 판정). 변경 후 간단 검증.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "eval_name": "handoff-plan-request",
+      "prompt": "검색 화면 성능이 느린 것 같아. 원인 분석하고 개선하는 작업을 계획으로 만들어줘. 실행은 나중에 다른 에이전트가 할 거야.",
+      "expected_output": "decision-first plan: 제1원칙, 포크별 판단 기준, 검증 게이트, 보류 프로토콜을 포함한 계획 문서. 기계적 단계 나열이 아니라 실행자가 판단할 수 있는 기준 포함. 코드에서 검증 안 한 주장 단정 금지.",
+      "files": []
+    }
+  ]
+}

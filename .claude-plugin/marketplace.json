@@ -9,7 +9,7 @@
     {
       "name": "speardragon-skills",
       "source": "./",
-      "description": "agent-browser, grill-me, herdr-agent, herdr-cli, notion-presentation, setup-matt-pocock-skills, tdd, to-html, to-issues, to-prd 스킬을 묶은 플러그인",
+      "description": "agent-browser, grill-me, herdr-agent, herdr-cli, notion-presentation, setup-matt-pocock-skills, tdd, to-html, to-issues, to-prd, unknowns 스킬을 묶은 플러그인",
       "category": "productivity"
     }
   ]

@@ -20,6 +20,7 @@
 | `to-html`                  | 콘텐츠를 브랜드 디자인이 적용된 단일 HTML 파일로 렌더링       |
 | `to-issues`                | 계획·스펙·PRD를 독립적으로 집을 수 있는 이슈로 분해           |
 | `to-prd`                   | 현재 대화를 PRD로 정리해 이슈 트래커에 발행                   |
+| `unknowns`                 | 작업 착수 전 map/territory 갭(모르는 것)을 구조적으로 발견    |
 
 ## Install (Claude Code plugin)
 
