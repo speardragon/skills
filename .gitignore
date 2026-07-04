@@ -5,3 +5,7 @@ node_modules/
 .agents
 .npmrc
 .DS_Store
+
+# 스킬 실행 산출물 (개인 데이터 — 커밋하지 않음)
+saju-*.html
+*command-message*.txt
