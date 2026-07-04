@@ -7,7 +7,7 @@ const os = require('node:os')
 const pkg = require('../package.json')
 const c = require('../src/colors')
 const prompt = require('../src/prompt')
-const { SKILLS_DIR, discoverSkills } = require('../src/skills')
+const { resolveSkillsDir, discoverSkills } = require('../src/skills')
 const { linkSkills, isInstalledIn } = require('../src/link')
 
 const truncate = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
@@ -35,6 +35,7 @@ function parseArgs(args) {
     else if (a === '--all' || a === '-a') opts.all = true
     else if (a === '--skills') opts.skills.push(...(args[++i] || '').split(',').map((s) => s.trim()).filter(Boolean))
     else if (a === '--yes' || a === '-y') opts.yes = true
+    else if (a === '--offline' || a === '--refresh') continue // handled in main()
     else if (!a.startsWith('-')) opts.skills.push(a)
     else throw new Error(`Unknown option: ${a}`)
   }
@@ -62,6 +63,8 @@ ${c.bold('Flags')} ${c.dim('(skip the matching prompt)')}
   -a, --all               Link every skill
       --skills a,b,c      Link a specific comma-separated set
   -y, --yes               Skip the confirmation prompt
+      --offline           Don't refresh the skills mirror over the network
+      --refresh           Force-refresh the skills mirror now
 
 ${c.bold('Examples')}
   cdragon --project --claude --all -y
@@ -69,14 +72,15 @@ ${c.bold('Examples')}
 `)
 }
 
-function listSkills() {
-  const skills = discoverSkills(SKILLS_DIR)
+function listSkills(syncOpts) {
+  const skillsDir = resolveSkillsDir(syncOpts)
+  const skills = discoverSkills(skillsDir)
   if (!skills.length) {
-    console.log(c.yellow(`No skills found in ${SKILLS_DIR}`))
+    console.log(c.yellow(`No skills found in ${skillsDir}`))
     return
   }
   const width = Math.max(...skills.map((s) => s.name.length))
-  console.log(`\n${c.bold(`Skills (${skills.length})`)}  ${c.dim(SKILLS_DIR)}`)
+  console.log(`\n${c.bold(`Skills (${skills.length})`)}  ${c.dim(skillsDir)}`)
   for (const group of groupBySource(skills)) {
     console.log(`\n  ${c.bold(group.label)} ${c.dim(`(${group.items.length})`)}`)
     for (const s of group.items) {
@@ -87,8 +91,9 @@ function listSkills() {
 }
 
 async function linkCommand(opts) {
-  const skills = discoverSkills(SKILLS_DIR)
-  if (!skills.length) throw new Error(`No skills found in ${SKILLS_DIR}`)
+  const skillsDir = resolveSkillsDir(opts)
+  const skills = discoverSkills(skillsDir)
+  if (!skills.length) throw new Error(`No skills found in ${skillsDir}`)
 
   // 1. Scope: project (cwd) or global (home).
   let scope = opts.scope
@@ -179,13 +184,14 @@ async function linkCommand(opts) {
 async function main() {
   const argv = process.argv.slice(2)
   const cmd = argv[0] && !argv[0].startsWith('-') ? argv[0] : null
+  const syncOpts = { offline: argv.includes('--offline'), refresh: argv.includes('--refresh') }
 
   if (cmd === 'help' || argv.includes('--help') || argv.includes('-h')) return help()
   if (argv.includes('--version') || argv.includes('-v')) return console.log(pkg.version)
-  if (cmd === 'list' || cmd === 'ls') return listSkills()
+  if (cmd === 'list' || cmd === 'ls') return listSkills(syncOpts)
 
   const rest = cmd === 'link' ? argv.slice(1) : argv
-  await linkCommand(parseArgs(rest))
+  await linkCommand({ ...parseArgs(rest), ...syncOpts })
 }
 
 main().catch((err) => {
