@@ -1,0 +1,9 @@
+{
+  "name": "saju-skill-engine",
+  "version": "1.0.0",
+  "private": true,
+  "description": "사주 봐주는 스킬",
+  "dependencies": {
+    "lunar-javascript": "1.7.6"
+  }
+}
