@@ -37,6 +37,17 @@
 /plugin marketplace add /path/to/skills
 ```
 
+## Install (vercel `skills` CLI)
+
+이 레포는 [vercel `skills` CLI](https://github.com/vercel-labs/agent-skills)의 소스 레포로도 바로 쓸 수 있습니다. 모든 스킬이 `skills/<name>/SKILL.md` 구조라, CLI가 자동으로 목록을 찾아 설치합니다. 별도 설정 파일은 필요하지 않습니다.
+
+```bash
+npx skills add speardragon/skills             # 목록에서 골라 설치
+npx skills add speardragon/skills/saju        # 특정 스킬만 설치
+```
+
+설치된 스킬의 출처와 해시는 사용하는 쪽 프로젝트의 `skills-lock.json`에 기록됩니다. (참고: 이 레포 자체의 `skills-lock.json`은 반대로, 여기서 가져온 외부 스킬들의 출처를 기록한 것입니다.)
+
 ## `cdragon` CLI
 
 이 레포의 스킬을 원하는 위치의 `.claude/skills` 또는 `.agents/skills` 에 **심링크**로 연결하는 CLI입니다. 플러그인 설치 대신 로컬 디렉터리에 바로 붙이고 싶을 때 사용합니다.
