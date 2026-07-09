@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{REPORT_TITLE}}</title>
+<style>
+  :root{
+    --blue:#3182f6; --blue600:#2272eb; --blue50:#e8f3ff;
+    --white:#ffffff; --g50:#f9fafb; --g100:#f2f4f6; --g200:#e5e8eb; --g300:#d1d6db;
+    --g400:#b0b8c1; --g500:#8b95a1; --g600:#6b7684; --g700:#4e5968; --g800:#333d4b; --g900:#191f28;
+    --red:#f04452; --green:#03b26c; --orange:#fe9800; --teal:#18a5a5; --purple:#a234c7; --yellow:#ffc342;
+    --sh1:0 1px 3px rgba(0,0,0,.06);
+    --sh2:0 2px 8px rgba(0,0,0,.08);
+    --sh3:0 4px 12px rgba(0,0,0,.12);
+    --font:"Toss Product Sans","Tossface","SF Pro KR","SF Pro Display",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",Roboto,"Noto Sans KR",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{
+    font-family:var(--font); background:var(--g100); color:var(--g800);
+    line-height:1.6; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    font-feature-settings:"tnum";
+  }
+  #progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--blue);z-index:100;transition:width .1s linear}
+  .wrap{max-width:720px;margin:0 auto;padding:0 20px 80px}
+
+  .hero{background:var(--white);border-radius:0 0 24px 24px;padding:48px 24px 36px;text-align:center;box-shadow:var(--sh1)}
+  .hero .tag{display:inline-block;background:var(--blue50);color:var(--blue600);font-size:13px;font-weight:700;padding:5px 12px;border-radius:9999px;margin-bottom:16px;letter-spacing:.02em}
+  .hero h1{font-size:30px;font-weight:700;color:var(--g900);line-height:1.33;letter-spacing:0}
+  .hero .sub{margin-top:10px;color:var(--g500);font-size:15px;font-weight:400}
+  .hero .meta{margin-top:6px;color:var(--g400);font-size:13px}
+
+  .warn{background:#fff8ec;border:1px solid #ffe0a6;color:#8a6415;border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.6;margin:20px 0 0;display:flex;gap:8px}
+  .warn b{color:#6b4c05}
+
+  .paljabox{background:var(--white);border-radius:16px;padding:24px 20px;box-shadow:var(--sh2);margin-top:20px}
+  .paljabox h2{font-size:16px;font-weight:600;color:var(--g700);text-align:center;margin-bottom:4px}
+  .paljabox .cap{font-size:12px;color:var(--g400);text-align:center;margin-bottom:18px}
+  .palja{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .col{text-align:center}
+  .col .label{font-size:11px;color:var(--g500);font-weight:600;margin-bottom:6px}
+  .pill{border-radius:14px;padding:12px 4px;background:var(--g50);border:1px solid var(--g200)}
+  .pill.self{background:var(--blue50);border-color:#cfe4ff}
+  .glyph{display:flex;align-items:baseline;justify-content:center;gap:5px;font-size:25px;font-weight:700;line-height:1.15;color:var(--g900)}
+  .glyph .han,.glyph .ko{font:inherit;color:inherit;letter-spacing:0}
+  .element-chip{display:inline-flex;align-items:baseline;justify-content:center;gap:3px;font-size:11px;font-weight:700;color:#fff;border-radius:6px;padding:1px 6px;margin-top:6px;line-height:1.4}
+  .element-chip .han,.element-chip .ko{font:inherit;color:inherit}
+  .element-chip.wood{background:#12b886}.element-chip.fire{background:#f04452}.element-chip.earth{background:#e8842b}.element-chip.metal{background:#868e96}.element-chip.water{background:#3182f6}
+  .col .ss{font-size:11px;color:var(--g600);margin-top:7px;min-height:15px}
+  .col .self-tag{font-size:10px;color:var(--blue600);font-weight:700}
+  .divider-mid{height:1px;background:var(--g200);margin:6px 0}
+
+  .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+  .stat{background:var(--white);border-radius:12px;padding:16px;box-shadow:var(--sh2)}
+  .stat .k{font-size:12px;color:var(--g500);font-weight:500}
+  .stat .v{font-size:22px;font-weight:700;color:var(--g900);margin-top:3px}
+  .stat .v small{font-size:13px;font-weight:400;color:var(--g600)}
+  .stat.hl .v{color:var(--blue)}
+
+  .barcard{background:var(--white);border-radius:16px;padding:22px 20px;box-shadow:var(--sh2);margin-top:12px}
+  .barcard h3{font-size:15px;font-weight:600;color:var(--g800);margin-bottom:16px}
+  .bar{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+  .bar .name{width:68px;font-size:13px;font-weight:700;color:var(--g700);flex-shrink:0;display:flex;gap:4px;align-items:baseline}
+  .bar .name span{font:inherit;color:inherit}
+  .bar .track{flex:1;height:14px;background:var(--g100);border-radius:9999px;overflow:hidden}
+  .bar .fill{height:100%;border-radius:9999px}
+  .bar .cnt{width:64px;text-align:right;font-size:12px;color:var(--g500);flex-shrink:0}
+  .bar .cnt b{color:var(--g800)}
+  .f-wood{background:#12b886}.f-fire{background:#f04452}.f-earth{background:#e8842b}.f-metal{background:#868e96}.f-water{background:#3182f6}.f-ss{background:var(--blue)}
+
+  .toc{background:var(--white);border-radius:16px;padding:20px;box-shadow:var(--sh2);margin-top:20px}
+  .toc h3{font-size:14px;font-weight:700;color:var(--g900);margin-bottom:12px}
+  .toc ol{list-style:none;columns:2;column-gap:20px}
+  .toc li{margin-bottom:9px;break-inside:avoid}
+  .toc a{color:var(--g600);text-decoration:none;font-size:13px;display:flex;gap:7px;align-items:baseline}
+  .toc a:hover{color:var(--blue)}
+  .toc a .n{color:var(--blue);font-weight:700;font-size:11px;min-width:30px}
+
+  .secdiv{text-align:center;margin:40px 0 6px}
+  .secdiv .line{height:1px;background:var(--g300);position:relative;top:14px}
+  .secdiv .t{display:inline-block;background:var(--g100);padding:0 16px;position:relative;font-size:13px;font-weight:700;color:var(--g500);letter-spacing:.05em}
+
+  .spothero{background:linear-gradient(160deg,#191f28,#2b3444);color:#fff;border-radius:20px;padding:30px 24px;margin-top:16px}
+  .spothero .tag{display:inline-block;background:rgba(255,255,255,.14);color:#cfe4ff;font-size:12px;font-weight:700;padding:5px 12px;border-radius:9999px;margin-bottom:14px}
+  .spothero h2{font-size:24px;font-weight:700;line-height:1.35;margin-bottom:12px}
+  .spothero p{font-size:14px;color:#c3cad4;line-height:1.7}
+
+  .spot{padding:26px 0 10px;margin-top:10px}
+  .spot + .spot{margin-top:18px}
+  .ch{background:var(--white);border-radius:16px;padding:26px 22px;box-shadow:var(--sh2);margin-top:14px}
+  .ch .head,.spot .head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .ch .num,.spot .num{width:34px;height:34px;flex-shrink:0;background:var(--blue);color:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700}
+  .spot .num{background:var(--g900)}
+  .ch h2,.spot h2{font-size:20px;font-weight:700;color:var(--g900);line-height:1.35}
+  .ch h2 .en{display:block;font-size:11px;font-weight:600;color:var(--g400);letter-spacing:.05em;text-transform:uppercase;margin-top:2px}
+  .ch p,.spot p{font-size:15px;color:var(--g700);margin-bottom:13px;line-height:1.72}
+  .ch p:last-child,.spot p:last-child{margin-bottom:0}
+  .ch strong,.spot strong{color:var(--g900);font-weight:700}
+  .ch .em,.spot .em{color:var(--blue600);font-weight:700}
+  .ch em,.spot em{color:var(--red);font-style:normal;font-weight:600}
+  .quote{border-left:3px solid var(--blue);background:var(--blue50);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;font-size:15px;color:var(--g800);font-weight:600;line-height:1.7}
+  .keys{background:var(--g50);border-radius:12px;padding:14px 16px;margin:14px 0;font-size:13.5px;color:var(--g700)}
+  .keys .kt{font-size:12px;font-weight:700;color:var(--g500);margin-bottom:8px;letter-spacing:.02em}
+  .keys ul{list-style:none}
+  .keys li{padding:4px 0 4px 18px;position:relative;line-height:1.6}
+  .keys li:before{content:"·";position:absolute;left:6px;color:var(--blue);font-weight:700}
+
+  .tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px;overflow:hidden;border-radius:12px;box-shadow:0 0 0 1px var(--g200)}
+  .tbl th{background:var(--g50);color:var(--g600);font-weight:600;text-align:left;padding:11px 14px;font-size:12px}
+  .tbl td{padding:11px 14px;border-top:1px solid var(--g200);color:var(--g700);vertical-align:top}
+  .tbl td b{color:var(--g900)}
+  .tbl tr td:first-child{font-weight:700;color:var(--g800);white-space:nowrap}
+
+  .bd{display:inline-block;font-size:12px;font-weight:700;border-radius:8px;padding:3px 9px;margin:2px 3px 2px 0}
+  .bd.blue{background:rgba(100,168,255,.15);color:var(--blue600)}
+  .bd.green{background:rgba(3,178,108,.13);color:#0a9160}
+  .bd.gray{background:rgba(2,32,71,.05);color:var(--g700)}
+  .bd.red{background:rgba(240,68,82,.13);color:#d63745}
+  .bd.gold{background:#fff4d6;color:#a5760a}
+
+  .tl{margin-top:14px}
+  .tlitem{background:var(--white);border-radius:16px;padding:22px;box-shadow:var(--sh2);margin-top:12px;position:relative;overflow:hidden}
+  .tlitem.now{box-shadow:0 0 0 2px var(--blue),var(--sh2)}
+  .tlitem .th{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .tlitem .era{font-size:17px;font-weight:700;color:var(--g900)}
+  .tlitem .age{font-size:12px;font-weight:600;color:var(--g500)}
+  .tlitem .gz{font-size:12px;font-weight:700;color:var(--blue600);background:var(--blue50);padding:2px 8px;border-radius:8px}
+  .tlitem .theme{font-size:13px;color:var(--g500);margin-bottom:12px;font-style:italic}
+  .tlitem ul{list-style:none}
+  .tlitem li{padding:6px 0 6px 20px;position:relative;font-size:14px;color:var(--g700);line-height:1.68}
+  .tlitem li:before{content:"";position:absolute;left:4px;top:13px;width:6px;height:6px;border-radius:50%;background:var(--g300)}
+  .tlitem.now li:before{background:var(--blue)}
+  .nowchip{display:inline-block;background:var(--blue);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:9999px;margin-left:4px}
+
+  .rank{margin-top:12px}
+  .rankcard{background:var(--white);border-radius:16px;padding:20px 22px;box-shadow:var(--sh2);margin-top:12px}
+  .rankcard .rh{font-size:16px;font-weight:700;color:var(--g900);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .rankcard.warn2{background:#fff6f6}
+  .rankcard.warn2 .rh{color:var(--red)}
+  .disc{text-align:center;color:var(--g500);font-size:13px;line-height:1.7;margin-top:28px;padding:20px;background:var(--white);border-radius:16px;box-shadow:var(--sh1)}
+  .footer{text-align:center;color:var(--g400);font-size:12px;margin-top:24px;padding-bottom:8px}
+  .footer .logo{color:var(--blue);font-weight:700}
+
+  @media (max-width:480px){
+    .hero h1{font-size:25px}
+    .toc ol{columns:1}
+    .stats{grid-template-columns:1fr 1fr}
+    .glyph{font-size:22px;gap:4px}
+    .bar .name{width:58px}
+  }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<header class="hero">
+  <span class="tag">평생사주 풀이</span>
+  <h1>{{HERO_TITLE}}</h1>
+  <div class="sub">{{USER_BIRTH_INFO}}</div>
+  <div class="meta">{{TIME_CORRECTION_INFO}}</div>
+</header>
+
+<main class="wrap">
+  {{WARNINGS_HTML}}
+
+  <section class="paljabox" id="palja">
+    <h2>명식 원국(元局)</h2>
+    <div class="cap">태어난 순간의 여덟 글자 — 사주팔자</div>
+    <div class="palja">
+      {{PALJA_COLUMNS_HTML}}
+    </div>
+  </section>
+
+  <section class="stats" aria-label="명식 요약">
+    {{SUMMARY_STATS_HTML}}
+  </section>
+
+  <section class="barcard" id="ohaeng">
+    <h3>오행(五行) 밸런스 — 글자 개수 기준</h3>
+    {{OHAENG_BARS_HTML}}
+  </section>
+
+  <section class="barcard" id="shipsin">
+    <h3>십신(十神) 구조 — 내 에너지 지도</h3>
+    {{SHIPSIN_BARS_HTML}}
+  </section>
+
+  <nav class="toc">
+    <h3>목차</h3>
+    <ol>
+      <li><a href="#spot-life"><span class="n">A</span>삶의 시나리오</a></li>
+      <li><a href="#spot-career"><span class="n">B</span>직업 추정</a></li>
+      <li><a href="#spot-marriage"><span class="n">C</span>결혼 시기</a></li>
+      <li><a href="#c1"><span class="n">01</span>총평</a></li>
+      <li><a href="#c2"><span class="n">02</span>타고난 성격·기질</a></li>
+      <li><a href="#c3"><span class="n">03</span>오행 밸런스</a></li>
+      <li><a href="#c4"><span class="n">04</span>십신 구조</a></li>
+      <li><a href="#c5"><span class="n">05</span>격국과 그릇</a></li>
+      <li><a href="#c6"><span class="n">06</span>용신</a></li>
+      <li><a href="#c7"><span class="n">07</span>대운 흐름</a></li>
+      <li><a href="#c8"><span class="n">08</span>재물운</a></li>
+      <li><a href="#c9"><span class="n">09</span>직업·적성운</a></li>
+      <li><a href="#c10"><span class="n">10</span>학업·시험운</a></li>
+      <li><a href="#c11"><span class="n">11</span>애정·결혼운</a></li>
+      <li><a href="#c12"><span class="n">12</span>건강운</a></li>
+      <li><a href="#c13"><span class="n">13</span>대인관계·인복</a></li>
+      <li><a href="#c14"><span class="n">14</span>가족운</a></li>
+      <li><a href="#c15"><span class="n">15</span>신살·12운성</a></li>
+      <li><a href="#c16"><span class="n">16</span>길흉 캘린더</a></li>
+      <li><a href="#c17"><span class="n">17</span>개운법</a></li>
+      <li><a href="#c18"><span class="n">18</span>마무리 조언</a></li>
+    </ol>
+  </nav>
+
+  <div class="secdiv"><div class="line"></div><span class="t">핵심 추정 · 대담한 명식 추론</span></div>
+  <section class="spothero">
+    <span class="tag">18장 분석을 바탕으로 한 하이라이트</span>
+    <h2>명식으로 그려본<br>삶, 직업, 결혼 시기</h2>
+    <p>아래 세 섹션은 먼저 완성한 18장 풀이를 근거로 다시 압축한 추정입니다. 확정이 아니라 명식상 가능성이 강한 장면과 시기입니다.</p>
+  </section>
+
+  <section class="spot" id="spot-life">
+    <div class="head"><div class="num">A</div><h2>이 사람은 어떤 삶을 살아왔을까</h2></div>
+    {{SPOTLIGHT_LIFE_HTML}}
+  </section>
+
+  <section class="spot" id="spot-career">
+    <div class="head"><div class="num">B</div><h2>이 사람의 직업은 무엇이었을까</h2></div>
+    {{SPOTLIGHT_CAREER_HTML}}
+  </section>
+
+  <section class="spot" id="spot-marriage">
+    <div class="head"><div class="num">C</div><h2>이 사람은 언제 결혼할 가능성이 높은가</h2></div>
+    {{SPOTLIGHT_MARRIAGE_HTML}}
+  </section>
+
+  <div class="secdiv"><div class="line"></div><span class="t">평생사주 18장</span></div>
+  {{CHAPTERS_18_HTML}}
+
+  <section class="ch" style="margin-top:24px;background:var(--blue50);box-shadow:none">
+    <h2 style="font-size:18px;font-weight:700;color:var(--g900);margin-bottom:10px">평생사주 풀이가 끝났습니다</h2>
+    <p style="color:var(--g700)">이제부터는 궁금한 건 무엇이든 물어보세요. 이미 계산된 이 명식에 근거해 답합니다. 궁합이 궁금하면 상대 생년월일을 알려주세요.</p>
+  </section>
+
+  <div class="disc">
+    사주는 통계적 경향이자 참고이며, 인생은 결국 본인의 선택으로 바뀝니다.<br>
+    수명·질병·법적·투자 판단을 단정하지 않으며, 부적·굿 없이 무해한 개운법만 안내합니다.
+  </div>
+
+  <div class="footer">
+    Styled with the <span class="logo">Toss</span> design system · 만세력 엔진 기반 명식 계산
+  </div>
+</main>
+
+<script>
+  var bar=document.getElementById('progress');
+  function upd(){
+    var h=document.documentElement;
+    var sc=h.scrollTop||document.body.scrollTop;
+    var max=(h.scrollHeight-h.clientHeight)||1;
+    bar.style.width=(sc/max*100)+'%';
+  }
+  document.addEventListener('scroll',upd,{passive:true});
+  upd();
+</script>
+</body>
+</html>
