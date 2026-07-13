@@ -157,12 +157,8 @@ function statusCommand(syncOpts) {
   console.log(`\n  ${LEGEND}\n`)
 }
 
-async function linkCommand(opts) {
-  const skillsDir = resolveSkillsDir(opts)
-  const skills = discoverSkills(skillsDir)
-  if (!skills.length) throw new Error(`No skills found in ${skillsDir}`)
-
-  // 1. Scope: project (cwd) or global (home).
+// Resolve scope + target folder(s) from flags, prompting for whatever's missing.
+async function chooseTargets(opts) {
   let scope = opts.scope
   if (!scope) {
     scope = await prompt.select('Install scope?', [
@@ -170,8 +166,6 @@ async function linkCommand(opts) {
       { label: `global   ${c.dim('(~/.claude, ~/.agents)')}`, value: 'global' },
     ])
   }
-
-  // 2. Folder(s): .claude and/or .agents.
   let folders = opts.folders
   if (!folders.length) {
     folders = await prompt.multiselect(
@@ -180,37 +174,44 @@ async function linkCommand(opts) {
     )
   }
   if (!folders.length) throw new Error('No target folder selected.')
-
   const base = scope === 'global' ? os.homedir() : process.cwd()
+  return { scope, folders, base }
+}
 
-  // 3. Skills: all, named, or interactively picked.
-  let chosen
-  if (opts.all) {
-    chosen = skills
-  } else if (opts.skills.length) {
-    chosen = opts.skills.map((name) => {
+// Resolve which skills to act on: --all, explicit names, or interactive pick.
+async function chooseSkills(opts, skills, base, folders) {
+  if (opts.all) return skills
+  if (opts.skills.length) {
+    return opts.skills.map((name) => {
       const found = skills.find((s) => s.name === name)
       if (!found) throw new Error(`Unknown skill: ${name}`)
       return found
     })
-  } else {
-    const choices = []
-    for (const group of groupBySource(skills)) {
-      choices.push({ header: true, label: `${group.label} (${group.items.length})` })
-      for (const s of group.items) {
-        // Show per-folder status; pre-check skills linked in at least one target.
-        const statuses = skillStatuses(s, base, folders)
-        choices.push({
-          value: s.name,
-          checked: statuses.some((st) => st.status === 'linked'),
-          label: `${s.name}  ${statusTag(statuses)}  ${c.dim(truncate(s.description, 44))}`,
-        })
-      }
-    }
-    console.log(`  ${c.dim(LEGEND)}`)
-    const picked = await prompt.multiselect('Which skills to link?', choices)
-    chosen = picked.map((name) => skills.find((s) => s.name === name))
   }
+  const choices = []
+  for (const group of groupBySource(skills)) {
+    choices.push({ header: true, label: `${group.label} (${group.items.length})` })
+    for (const s of group.items) {
+      const statuses = skillStatuses(s, base, folders)
+      choices.push({
+        value: s.name,
+        checked: statuses.some((st) => st.status === 'linked'),
+        label: `${s.name}  ${statusTag(statuses)}  ${c.dim(truncate(s.description, 44))}`,
+      })
+    }
+  }
+  console.log(`  ${c.dim(LEGEND)}`)
+  const picked = await prompt.multiselect('Which skills to link?', choices)
+  return picked.map((name) => skills.find((s) => s.name === name))
+}
+
+async function linkCommand(opts) {
+  const skillsDir = resolveSkillsDir(opts)
+  const skills = discoverSkills(skillsDir)
+  if (!skills.length) throw new Error(`No skills found in ${skillsDir}`)
+
+  const { scope, folders, base } = await chooseTargets(opts)
+  const chosen = await chooseSkills(opts, skills, base, folders)
   if (!chosen.length) throw new Error('No skills selected.')
 
   // Plan: what will happen at each skill × folder target.
