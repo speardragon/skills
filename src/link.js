@@ -12,12 +12,19 @@ function linkStatus(sourceDir, linkPath) {
   let stat
   try {
     stat = fs.lstatSync(linkPath)
-  } catch {
-    return 'none'
+  } catch (err) {
+    if (err.code === 'ENOENT') return 'none'
+    throw err
   }
   if (!stat.isSymbolicLink()) return 'dir'
-  const current = path.resolve(path.dirname(linkPath), fs.readlinkSync(linkPath))
-  return current === sourceDir ? 'linked' : 'stale'
+  let target
+  try {
+    target = fs.readlinkSync(linkPath)
+  } catch (err) {
+    if (err.code === 'ENOENT') return 'none' // link vanished between lstat and readlink
+    throw err
+  }
+  return path.resolve(path.dirname(linkPath), target) === sourceDir ? 'linked' : 'stale'
 }
 
 // Move a real directory out of the way so a symlink can take its place.

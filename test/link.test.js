@@ -88,3 +88,11 @@ test('skillStatuses reports per-folder status', () => {
     { folder: '.agents', status: 'none' },
   ])
 })
+
+test('linkStatus: rethrows non-ENOENT errors instead of reporting none', () => {
+  // A regular file where a directory is expected -> lstat of a child throws ENOTDIR.
+  const notADir = path.join(tmp, 'afile')
+  fs.writeFileSync(notADir, 'x')
+  const linkPath = path.join(notADir, 'skills', 'demo')
+  assert.throws(() => linkStatus(source, linkPath), (err) => err.code === 'ENOTDIR')
+})
