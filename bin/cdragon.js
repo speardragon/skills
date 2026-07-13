@@ -38,6 +38,13 @@ const OUTCOME = {
   exists:   { icon: c.yellow('! skipped '), made: false },
 }
 
+// Post-action vocabulary for unlink (distinct key space from OUTCOME).
+const UNLINK_OUTCOME = {
+  unlinked: c.green('- unlinked'),
+  absent: c.dim('= absent  '),
+  'not-ours': c.yellow('! kept    '),
+}
+
 // Compact per-folder tag, e.g. "[claude ✓ agents —]".
 function statusTag(statuses) {
   return c.dim('[') + statuses.map((s) => `${s.folder.slice(1)} ${mark(s.status)}`).join(' ') + c.dim(']')
@@ -325,15 +332,10 @@ async function unlinkCommand(opts) {
   const results = []
   for (const folder of folders) results.push(...unlinkSkills(chosen, base, folder))
 
-  const icon = {
-    unlinked: c.green('- unlinked'),
-    absent: c.dim('= absent  '),
-    'not-ours': c.yellow('! kept    '),
-  }
   console.log('')
   for (const r of results) {
-    const note = r.status === 'not-ours' ? c.yellow(' (not our symlink — left as-is)') : ''
-    console.log(`  ${icon[r.status]}  ${r.folder}/skills/${r.skill}${note}`)
+    const note = r.status === 'not-ours' ? c.yellow(' (not created by cdragon — left as-is)') : ''
+    console.log(`  ${UNLINK_OUTCOME[r.status]}  ${r.folder}/skills/${r.skill}${note}`)
   }
   const removed = results.filter((r) => r.status === 'unlinked').length
   console.log(`\n${c.green(`Done. ${removed} link(s) removed.`)}\n`)
