@@ -8,6 +8,7 @@ node_modules/
 
 # 스킬 실행 산출물 (개인 데이터 — 커밋하지 않음)
 saju-*.html
+*.html
 saju-*.png
 !skills/saju/references/saju-report-template.html
 *command-message*.txt
