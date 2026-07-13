@@ -6,7 +6,7 @@ const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
 
-const { linkSkill, linkStatus, skillStatuses } = require('../src/link')
+const { linkSkill, linkStatus, skillStatuses, unlinkSkill } = require('../src/link')
 
 let tmp, source, target
 
@@ -95,4 +95,30 @@ test('linkStatus: rethrows non-ENOENT errors instead of reporting none', () => {
   fs.writeFileSync(notADir, 'x')
   const linkPath = path.join(notADir, 'skills', 'demo')
   assert.throws(() => linkStatus(source, linkPath), (err) => err.code === 'ENOTDIR')
+})
+
+test('unlinkSkill: removes our own symlink', () => {
+  const linkPath = path.join(target, 'demo')
+  linkSkill(source, linkPath)
+  assert.deepEqual(unlinkSkill(source, linkPath), { status: 'unlinked' })
+  assert.equal(linkStatus(source, linkPath), 'none')
+})
+
+test('unlinkSkill: leaves a real dir untouched (not-ours)', () => {
+  const linkPath = path.join(target, 'demo')
+  fs.mkdirSync(linkPath)
+  fs.writeFileSync(path.join(linkPath, 'keep.txt'), 'mine')
+  assert.deepEqual(unlinkSkill(source, linkPath), { status: 'not-ours' })
+  assert.ok(fs.existsSync(path.join(linkPath, 'keep.txt')))
+})
+
+test('unlinkSkill: leaves a foreign symlink untouched (not-ours)', () => {
+  const linkPath = path.join(target, 'demo')
+  fs.symlinkSync(path.join(tmp, 'elsewhere'), linkPath, 'dir')
+  assert.deepEqual(unlinkSkill(source, linkPath), { status: 'not-ours' })
+  assert.ok(fs.lstatSync(linkPath).isSymbolicLink())
+})
+
+test('unlinkSkill: absent when nothing there', () => {
+  assert.deepEqual(unlinkSkill(source, path.join(target, 'demo')), { status: 'absent' })
 })

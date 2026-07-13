@@ -8,7 +8,7 @@ const pkg = require('../package.json')
 const c = require('../src/colors')
 const prompt = require('../src/prompt')
 const { resolveSkillsDir, discoverSkills } = require('../src/skills')
-const { linkSkills, skillStatuses, FOLDERS } = require('../src/link')
+const { linkSkills, skillStatuses, FOLDERS, unlinkSkills } = require('../src/link')
 
 const truncate = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
 
@@ -84,6 +84,7 @@ ${c.bold('Usage')}
   cdragon                 Interactive: pick scope, folder(s) and skills to link
   cdragon [skills...]     Link named skills (skips the skill picker)
   cdragon status          Where is each skill installed? (global/project × .claude/.agents)
+  cdragon unlink [skills...]  Remove skill symlinks (only ones pointing at this repo)
   cdragon list            List available skills
   cdragon help            Show this help
 
@@ -273,6 +274,71 @@ async function linkCommand(opts) {
   console.log(`\n${c.green(`Done. ${made} symlink(s) created/updated.`)}\n`)
 }
 
+async function unlinkCommand(opts) {
+  const skillsDir = resolveSkillsDir(opts)
+  const skills = discoverSkills(skillsDir)
+  if (!skills.length) throw new Error(`No skills found in ${skillsDir}`)
+
+  const { scope, folders, base } = await chooseTargets(opts)
+
+  // Only consider skills actually linked in the chosen targets.
+  let chosen
+  if (opts.all) {
+    chosen = skills.filter((s) => skillStatuses(s, base, folders).some((st) => st.status === 'linked'))
+  } else if (opts.skills.length) {
+    chosen = opts.skills.map((name) => {
+      const found = skills.find((s) => s.name === name)
+      if (!found) throw new Error(`Unknown skill: ${name}`)
+      return found
+    })
+  } else {
+    const choices = []
+    for (const s of skills) {
+      const statuses = skillStatuses(s, base, folders)
+      if (!statuses.some((st) => st.status === 'linked')) continue
+      choices.push({ value: s.name, checked: false, label: `${s.name}  ${statusTag(statuses)}` })
+    }
+    if (!choices.length) {
+      console.log(c.dim('Nothing linked in the selected targets.'))
+      return
+    }
+    const picked = await prompt.multiselect('Which skills to unlink?', choices)
+    chosen = picked.map((name) => skills.find((s) => s.name === name))
+  }
+  if (!chosen.length) {
+    console.log(c.dim('Nothing selected.'))
+    return
+  }
+
+  console.log('')
+  console.log(`  ${c.bold('scope')}    ${scope} ${c.dim(`(${base})`)}`)
+  console.log(`  ${c.bold('folders')}  ${folders.join(', ')}\n`)
+
+  if (!opts.yes) {
+    const ok = await prompt.confirm(`Remove ${chosen.length} skill link(s) from ${folders.join(', ')}?`, false)
+    if (!ok) {
+      console.log(c.dim('Aborted.'))
+      return
+    }
+  }
+
+  const results = []
+  for (const folder of folders) results.push(...unlinkSkills(chosen, base, folder))
+
+  const icon = {
+    unlinked: c.green('- unlinked'),
+    absent: c.dim('= absent  '),
+    'not-ours': c.yellow('! kept    '),
+  }
+  console.log('')
+  for (const r of results) {
+    const note = r.status === 'not-ours' ? c.yellow(' (not our symlink — left as-is)') : ''
+    console.log(`  ${icon[r.status]}  ${r.folder}/skills/${r.skill}${note}`)
+  }
+  const removed = results.filter((r) => r.status === 'unlinked').length
+  console.log(`\n${c.green(`Done. ${removed} link(s) removed.`)}\n`)
+}
+
 async function main() {
   const argv = process.argv.slice(2)
   const cmd = argv[0] && !argv[0].startsWith('-') ? argv[0] : null
@@ -282,6 +348,9 @@ async function main() {
   if (argv.includes('--version') || argv.includes('-v')) return console.log(pkg.version)
   if (cmd === 'list' || cmd === 'ls') return listSkills(syncOpts)
   if (cmd === 'status' || cmd === 'st') return statusCommand(syncOpts)
+  if (cmd === 'unlink' || cmd === 'rm') {
+    return unlinkCommand({ ...parseArgs(argv.slice(1)), ...syncOpts })
+  }
 
   const rest = cmd === 'link' ? argv.slice(1) : argv
   await linkCommand({ ...parseArgs(rest), ...syncOpts })

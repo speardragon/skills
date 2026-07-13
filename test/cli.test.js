@@ -40,3 +40,20 @@ test('non-TTY: real-folder conflict without -y/-f fails clearly, not silently', 
   assert.match(r.stderr + r.stdout, /TTY/i)
   assert.ok(fs.existsSync(path.join(squat, 'SKILL.md')), 'squatting folder untouched')
 })
+
+test('unlink -y removes our link but keeps a real folder', () => {
+  run(['-p', '--claude', 'tdd', '-y'])
+  const link = path.join(tmp, '.claude', 'skills', 'tdd')
+  assert.ok(fs.lstatSync(link).isSymbolicLink())
+  const real = path.join(tmp, '.claude', 'skills', 'to-html')
+  fs.mkdirSync(real, { recursive: true })
+  fs.writeFileSync(path.join(real, 'SKILL.md'), 'mine')
+
+  const r = spawnSync('node', [CLI, 'unlink', '-p', '--claude', 'tdd', 'to-html', '-y'], {
+    cwd: tmp, encoding: 'utf8', input: '',
+    env: { ...process.env, CDRAGON_OFFLINE: '1', NO_COLOR: '1' },
+  })
+  assert.equal(r.status, 0, r.stderr)
+  assert.ok(!fs.existsSync(link), 'our symlink removed')
+  assert.ok(fs.existsSync(path.join(real, 'SKILL.md')), 'real folder kept')
+})

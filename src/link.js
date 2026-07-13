@@ -86,4 +86,26 @@ function linkSkills(skills, base, folder, opts) {
   })
 }
 
-module.exports = { linkSkill, linkSkills, linkStatus, skillStatuses, FOLDERS }
+// Remove a skill's symlink ONLY if it currently points at sourceDir. Never
+// touches real dirs or foreign/stale symlinks. Returns:
+// unlinked | absent | not-ours.
+function unlinkSkill(sourceDir, linkPath) {
+  const status = linkStatus(sourceDir, linkPath)
+  if (status === 'linked') {
+    fs.rmSync(linkPath)
+    return { status: 'unlinked' }
+  }
+  if (status === 'none') return { status: 'absent' }
+  return { status: 'not-ours' }
+}
+
+function unlinkSkills(skills, base, folder) {
+  const root = path.join(base, folder, 'skills')
+  return skills.map((skill) => {
+    const name = path.basename(skill.dir)
+    const { status } = unlinkSkill(skill.dir, path.join(root, name))
+    return { skill: name, folder, status }
+  })
+}
+
+module.exports = { linkSkill, linkSkills, linkStatus, skillStatuses, FOLDERS, unlinkSkill, unlinkSkills }
