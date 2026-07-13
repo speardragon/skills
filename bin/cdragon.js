@@ -8,22 +8,39 @@ const pkg = require('../package.json')
 const c = require('../src/colors')
 const prompt = require('../src/prompt')
 const { resolveSkillsDir, discoverSkills } = require('../src/skills')
-const { linkSkills, skillStatuses } = require('../src/link')
+const { linkSkills, skillStatuses, FOLDERS } = require('../src/link')
 
 const truncate = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
 
-// One-character status marks, shared by the picker, the plan and `status`.
-const MARK = {
-  linked: c.green('✓'),
-  stale: c.yellow('↻'),
-  dir: c.yellow('!'),
-  none: c.dim('—'),
+// Pre-state vocabulary (what linkStatus reports). One row per state: the glyph
+// for the status matrix/picker, and the action label for the pre-link plan.
+const STATE = {
+  none:   { glyph: '—', color: c.dim,    action: '+ link   ', actionColor: c.green },
+  linked: { glyph: '✓', color: c.green,  action: '= already', actionColor: c.dim },
+  stale:  { glyph: '↻', color: c.yellow, action: '↻ relink ', actionColor: c.yellow },
+  dir:    { glyph: '!', color: c.yellow, action: '! folder ', actionColor: c.yellow },
 }
-const LEGEND = `${MARK.linked} linked  ${MARK.none} not installed  ${MARK.dir} real folder  ${MARK.stale} stale link`
+const mark = (st) => STATE[st].color(STATE[st].glyph)
+// Pad the RAW glyph to width, THEN color — coloring adds zero visible width.
+const markCell = (st, w) => STATE[st].color(STATE[st].glyph.padEnd(w))
+
+const LEGEND = [
+  ['linked', 'linked'], ['none', 'not installed'],
+  ['dir', 'real folder'], ['stale', 'stale link'],
+].map(([st, label]) => `${mark(st)} ${label}`).join('  ')
+
+// Post-action vocabulary (what linkSkill returns after acting).
+const OUTCOME = {
+  linked:   { icon: c.green('+ linked  '), made: true },
+  relinked: { icon: c.green('↻ relinked'), made: true },
+  replaced: { icon: c.green('± replaced'), made: true },
+  already:  { icon: c.dim('= already '),   made: false },
+  exists:   { icon: c.yellow('! skipped '), made: false },
+}
 
 // Compact per-folder tag, e.g. "[claude ✓ agents —]".
 function statusTag(statuses) {
-  return c.dim('[') + statuses.map((s) => `${s.folder.slice(1)} ${MARK[s.status]}`).join(' ') + c.dim(']')
+  return c.dim('[') + statuses.map((s) => `${s.folder.slice(1)} ${mark(s.status)}`).join(' ') + c.dim(']')
 }
 
 // Split skills into ordered, non-empty groups by where they came from.
@@ -45,7 +62,7 @@ function parseArgs(args) {
     else if (a === '--project' || a === '-p') opts.scope = 'project'
     else if (a === '--claude') opts.folders.push('.claude')
     else if (a === '--agents') opts.folders.push('.agents')
-    else if (a === '--both') opts.folders.push('.claude', '.agents')
+    else if (a === '--both') opts.folders.push(...FOLDERS)
     else if (a === '--all' || a === '-a') opts.all = true
     else if (a === '--skills') opts.skills.push(...(args[++i] || '').split(',').map((s) => s.trim()).filter(Boolean))
     else if (a === '--yes' || a === '-y') opts.yes = true
@@ -116,23 +133,25 @@ function statusCommand(syncOpts) {
     return
   }
 
-  const folders = ['.claude', '.agents']
   const targets = [
     { label: 'global', base: os.homedir() },
     { label: 'project', base: process.cwd() },
   ]
-  const width = Math.max(...skills.map((s) => s.name.length), 'skill'.length)
-  const pad = (s) => `  ${s.padEnd(width)}`
+  const COL = 9 // one folder column
+  const nameW = Math.max(...skills.map((s) => s.name.length))
+  const namePad = (s) => s.padEnd(nameW + 2)
+  const groupW = COL * FOLDERS.length
 
   console.log(`\n${c.bold('Install status')}  ${c.dim(`project = ${process.cwd()}`)}`)
-  console.log(`${' '.repeat(width + 2)}  ${c.bold('global')}${' '.repeat(12)}${c.bold('project')}`)
-  console.log(`${' '.repeat(width + 2)}  ${c.dim('claude  agents')}    ${c.dim('claude  agents')}`)
+  console.log('  ' + namePad('') + targets.map((t) => c.bold(t.label.padEnd(groupW))).join(''))
+  console.log('  ' + namePad('') + targets.map(() => FOLDERS.map((f) => c.dim(f.slice(1).padEnd(COL))).join('')).join(''))
 
   for (const skill of skills) {
-    const cells = targets.flatMap((t) =>
-      skillStatuses(skill, t.base, folders).map((s) => MARK[s.status])
-    )
-    console.log(`${pad(skill.name)}    ${cells[0]}       ${cells[1]}         ${cells[2]}       ${cells[3]}`)
+    const cells = targets
+      .flatMap((t) => skillStatuses(skill, t.base, FOLDERS).map((s) => s.status))
+      .map((st) => markCell(st, COL))
+      .join('')
+    console.log('  ' + c.cyan(namePad(skill.name)) + cells)
   }
   console.log(`\n  ${LEGEND}\n`)
 }
@@ -154,10 +173,10 @@ async function linkCommand(opts) {
   // 2. Folder(s): .claude and/or .agents.
   let folders = opts.folders
   if (!folders.length) {
-    folders = await prompt.multiselect('Which folder(s) to link into?', [
-      { label: '.claude/skills', value: '.claude' },
-      { label: '.agents/skills', value: '.agents' },
-    ])
+    folders = await prompt.multiselect(
+      'Which folder(s) to link into?',
+      FOLDERS.map((f) => ({ label: `${f}/skills`, value: f }))
+    )
   }
   if (!folders.length) throw new Error('No target folder selected.')
 
@@ -198,12 +217,6 @@ async function linkCommand(opts) {
   const allStatuses = plans.flatMap((p) => p.statuses)
   const conflicts = allStatuses.filter((st) => st.status === 'dir').length
 
-  const ACTION = {
-    none: c.green('+ link   '),
-    linked: c.dim('= already'),
-    stale: c.yellow('↻ relink '),
-    dir: c.yellow('! folder '),
-  }
   const width = Math.max(...chosen.map((s) => s.name.length))
 
   console.log('')
@@ -211,7 +224,9 @@ async function linkCommand(opts) {
   console.log(`  ${c.bold('folders')}  ${folders.join(', ')}`)
   console.log('')
   for (const p of plans) {
-    const cells = p.statuses.map((st) => `${st.folder} ${ACTION[st.status]}`).join('   ')
+    const cells = p.statuses
+      .map((st) => `${st.folder} ${STATE[st.status].actionColor(STATE[st.status].action)}`)
+      .join('   ')
     console.log(`  ${c.cyan(p.skill.name.padEnd(width))}  ${cells}`)
   }
   console.log('')
@@ -245,22 +260,14 @@ async function linkCommand(opts) {
   const results = []
   for (const folder of folders) results.push(...linkSkills(chosen, base, folder, { replace }))
 
-  const icon = {
-    linked: c.green('+ linked  '),
-    relinked: c.green('↻ relinked'),
-    replaced: c.green('± replaced'),
-    already: c.dim('= already '),
-    exists: c.yellow('! skipped '),
-  }
   console.log('')
   for (const r of results) {
     let note = ''
     if (r.status === 'exists') note = c.yellow(' (real dir exists, use --force to replace)')
     if (r.status === 'replaced') note = c.dim(` (old folder → ${r.backup})`)
-    console.log(`  ${icon[r.status]}  ${r.folder}/skills/${r.skill}${note}`)
+    console.log(`  ${OUTCOME[r.status].icon}  ${r.folder}/skills/${r.skill}${note}`)
   }
-
-  const made = results.filter((r) => ['linked', 'relinked', 'replaced'].includes(r.status)).length
+  const made = results.filter((r) => OUTCOME[r.status].made).length
   console.log(`\n${c.green(`Done. ${made} symlink(s) created/updated.`)}\n`)
 }
 

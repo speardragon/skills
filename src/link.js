@@ -3,6 +3,10 @@
 const fs = require('node:fs')
 const path = require('node:path')
 
+// The target folder conventions cdragon links into — the single source of truth
+// for the CLI's flag handling, folder picker, and status matrix.
+const FOLDERS = ['.claude', '.agents']
+
 // What lives at linkPath, relative to sourceDir?
 //   linked — symlink pointing at sourceDir
 //   stale  — symlink pointing somewhere else
@@ -82,4 +86,4 @@ function linkSkills(skills, base, folder, opts) {
   })
 }
 
-module.exports = { linkSkill, linkSkills, linkStatus, skillStatuses }
+module.exports = { linkSkill, linkSkills, linkStatus, skillStatuses, FOLDERS }
