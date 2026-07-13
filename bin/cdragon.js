@@ -137,7 +137,8 @@ function statusCommand(syncOpts) {
     { label: 'global', base: os.homedir() },
     { label: 'project', base: process.cwd() },
   ]
-  const COL = 9 // one folder column
+  // Column width = longest folder label (sans dot) + 3 spaces of gutter.
+  const COL = Math.max(...FOLDERS.map((f) => f.slice(1).length)) + 3
   const nameW = Math.max(...skills.map((s) => s.name.length))
   const namePad = (s) => s.padEnd(nameW + 2)
   const groupW = COL * FOLDERS.length
