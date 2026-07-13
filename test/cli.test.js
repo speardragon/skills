@@ -1,0 +1,42 @@
+'use strict'
+
+const { test, beforeEach, afterEach } = require('node:test')
+const assert = require('node:assert/strict')
+const fs = require('node:fs')
+const os = require('node:os')
+const path = require('node:path')
+const { spawnSync } = require('node:child_process')
+
+const CLI = path.join(__dirname, '..', 'bin', 'cdragon.js')
+let tmp
+
+beforeEach(() => { tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cdragon-cli-')) })
+afterEach(() => { fs.rmSync(tmp, { recursive: true, force: true }) })
+
+// Runs the CLI in the temp dir with a non-TTY stdin (spawnSync pipes stdin).
+function run(args) {
+  return spawnSync('node', [CLI, ...args], {
+    cwd: tmp,
+    encoding: 'utf8',
+    input: '',
+    env: { ...process.env, CDRAGON_OFFLINE: '1', NO_COLOR: '1' },
+  })
+}
+
+test('non-TTY: -y links a fresh target successfully', () => {
+  const r = run(['-p', '--claude', 'tdd', '-y'])
+  assert.equal(r.status, 0, r.stderr)
+  const link = path.join(tmp, '.claude', 'skills', 'tdd')
+  assert.ok(fs.lstatSync(link).isSymbolicLink())
+})
+
+test('non-TTY: real-folder conflict without -y/-f fails clearly, not silently', () => {
+  const squat = path.join(tmp, '.claude', 'skills', 'tdd')
+  fs.mkdirSync(squat, { recursive: true })
+  fs.writeFileSync(path.join(squat, 'SKILL.md'), 'mine')
+
+  const r = run(['-p', '--claude', 'tdd'])
+  assert.notEqual(r.status, 0, 'should exit non-zero when it cannot prompt')
+  assert.match(r.stderr + r.stdout, /TTY/i)
+  assert.ok(fs.existsSync(path.join(squat, 'SKILL.md')), 'squatting folder untouched')
+})

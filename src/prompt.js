@@ -133,6 +133,7 @@ function multiselect(message, choices) {
 
 // Yes/no question. Resolves a boolean.
 function confirm(message, defaultYes = true) {
+  requireTTY()
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
   const hint = defaultYes ? 'Y/n' : 'y/N'
   return new Promise((resolve) => {
