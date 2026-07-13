@@ -5,6 +5,9 @@
   "bin": {
     "cdragon": "bin/cdragon.js"
   },
+  "scripts": {
+    "test": "node --test"
+  },
   "type": "commonjs",
   "engines": {
     "node": ">=18"
