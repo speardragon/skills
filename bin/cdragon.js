@@ -3,12 +3,13 @@
 
 const path = require('node:path')
 const os = require('node:os')
+const fs = require('node:fs')
 
 const pkg = require('../package.json')
 const c = require('../src/colors')
 const prompt = require('../src/prompt')
 const { resolveSkillsDir, discoverSkills } = require('../src/skills')
-const { linkSkills, skillStatuses, FOLDERS, unlinkSkills } = require('../src/link')
+const { linkSkills, skillStatuses, FOLDERS, unlinkSkills, findOrphans } = require('../src/link')
 
 const truncate = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
 
@@ -92,6 +93,7 @@ ${c.bold('Usage')}
   cdragon [skills...]     Link named skills (skips the skill picker)
   cdragon status          Where is each skill installed? (global/project × .claude/.agents)
   cdragon unlink [skills...]  Remove skill symlinks (only ones pointing at this repo)
+  cdragon prune              Remove orphaned links (skills deleted/renamed in the repo)
   cdragon list            List available skills
   cdragon help            Show this help
 
@@ -161,6 +163,16 @@ function statusCommand(syncOpts) {
       .map((st) => markCell(st, COL))
       .join('')
     console.log('  ' + c.cyan(namePad(skill.name)) + cells)
+  }
+
+  const orphans = targets.flatMap((t) =>
+    findOrphans(t.base, FOLDERS, skillsDir).map((o) => ({ ...o, scope: t.label }))
+  )
+  if (orphans.length) {
+    console.log(`\n  ${c.yellow(`Orphaned links (${orphans.length})`)} ${c.dim('— source gone; run `cdragon prune`')}`)
+    for (const o of orphans) {
+      console.log(`    ${c.yellow('⚠')} ${o.scope} ${o.folder}/skills/${o.name}`)
+    }
   }
   console.log(`\n  ${LEGEND}\n`)
 }
@@ -341,6 +353,43 @@ async function unlinkCommand(opts) {
   console.log(`\n${c.green(`Done. ${removed} link(s) removed.`)}\n`)
 }
 
+async function pruneCommand(opts) {
+  const skillsDir = resolveSkillsDir(opts)
+  const targets =
+    opts.scope === 'global'
+      ? [{ label: 'global', base: os.homedir() }]
+      : opts.scope === 'project'
+        ? [{ label: 'project', base: process.cwd() }]
+        : [
+            { label: 'global', base: os.homedir() },
+            { label: 'project', base: process.cwd() },
+          ]
+
+  const orphans = targets.flatMap((t) =>
+    findOrphans(t.base, FOLDERS, skillsDir).map((o) => ({ ...o, scope: t.label }))
+  )
+  if (!orphans.length) {
+    console.log(c.green('No orphaned links. Nothing to prune.'))
+    return
+  }
+
+  console.log(`\n  ${c.bold('Orphaned links')} ${c.dim('(source skill missing from the repo)')}\n`)
+  for (const o of orphans) {
+    console.log(`    ${c.yellow('⚠')} ${o.scope} ${o.folder}/skills/${o.name}`)
+  }
+  console.log('')
+
+  if (!opts.yes) {
+    const ok = await prompt.confirm(`Remove ${orphans.length} orphaned link(s)?`, false)
+    if (!ok) {
+      console.log(c.dim('Aborted.'))
+      return
+    }
+  }
+  for (const o of orphans) fs.rmSync(o.linkPath)
+  console.log(`\n${c.green(`Done. ${orphans.length} orphaned link(s) removed.`)}\n`)
+}
+
 async function main() {
   const argv = process.argv.slice(2)
   const cmd = argv[0] && !argv[0].startsWith('-') ? argv[0] : null
@@ -352,6 +401,9 @@ async function main() {
   if (cmd === 'status' || cmd === 'st') return statusCommand(syncOpts)
   if (cmd === 'unlink' || cmd === 'rm') {
     return unlinkCommand({ ...parseArgs(argv.slice(1)), ...syncOpts })
+  }
+  if (cmd === 'prune') {
+    return pruneCommand({ ...parseArgs(argv.slice(1)), ...syncOpts })
   }
 
   const rest = cmd === 'link' ? argv.slice(1) : argv

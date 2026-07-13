@@ -57,3 +57,19 @@ test('unlink -y removes our link but keeps a real folder', () => {
   assert.ok(!fs.existsSync(link), 'our symlink removed')
   assert.ok(fs.existsSync(path.join(real, 'SKILL.md')), 'real folder kept')
 })
+
+test('prune -y removes a dangling repo-link, keeps a foreign link', () => {
+  const root = path.join(tmp, '.claude', 'skills')
+  fs.mkdirSync(root, { recursive: true })
+  const repoSkills = path.join(__dirname, '..', 'skills')
+  fs.symlinkSync(path.join(repoSkills, 'definitely-gone'), path.join(root, 'definitely-gone'), 'dir')
+  fs.symlinkSync('/nope/foreign', path.join(root, 'foreign'), 'dir')
+
+  const r = spawnSync('node', [CLI, 'prune', '-p', '-y'], {
+    cwd: tmp, encoding: 'utf8', input: '',
+    env: { ...process.env, CDRAGON_OFFLINE: '1', NO_COLOR: '1' },
+  })
+  assert.equal(r.status, 0, r.stderr)
+  assert.ok(!fs.existsSync(path.join(root, 'definitely-gone')), 'dangling repo-link pruned')
+  assert.ok(fs.lstatSync(path.join(root, 'foreign')).isSymbolicLink(), 'foreign link kept')
+})
