@@ -108,4 +108,44 @@ function unlinkSkills(skills, base, folder) {
   })
 }
 
-module.exports = { linkSkill, linkSkills, linkStatus, skillStatuses, FOLDERS, unlinkSkill, unlinkSkills }
+// Symlinks under <base>/<folder>/skills that point INTO sourceRoot but whose
+// target no longer exists — leftovers from a skill removed or renamed in the
+// repo. Foreign symlinks and real dirs are never reported.
+function findOrphans(base, folders, sourceRoot) {
+  const orphans = []
+  for (const folder of folders) {
+    const root = path.join(base, folder, 'skills')
+    let entries
+    try {
+      entries = fs.readdirSync(root, { withFileTypes: true })
+    } catch {
+      continue
+    }
+    for (const entry of entries) {
+      if (!entry.isSymbolicLink()) continue
+      const linkPath = path.join(root, entry.name)
+      let target
+      try {
+        target = path.resolve(root, fs.readlinkSync(linkPath))
+      } catch {
+        continue
+      }
+      const insideSource = target === sourceRoot || target.startsWith(sourceRoot + path.sep)
+      if (insideSource && !fs.existsSync(target)) {
+        orphans.push({ folder, name: entry.name, linkPath, target })
+      }
+    }
+  }
+  return orphans
+}
+
+module.exports = {
+  linkSkill,
+  linkSkills,
+  linkStatus,
+  skillStatuses,
+  FOLDERS,
+  unlinkSkill,
+  unlinkSkills,
+  findOrphans,
+}

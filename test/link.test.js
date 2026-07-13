@@ -6,7 +6,7 @@ const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
 
-const { linkSkill, linkStatus, skillStatuses, unlinkSkill } = require('../src/link')
+const { linkSkill, linkStatus, skillStatuses, unlinkSkill, findOrphans } = require('../src/link')
 
 let tmp, source, target
 
@@ -121,4 +121,31 @@ test('unlinkSkill: leaves a foreign symlink untouched (not-ours)', () => {
 
 test('unlinkSkill: absent when nothing there', () => {
   assert.deepEqual(unlinkSkill(source, path.join(target, 'demo')), { status: 'absent' })
+})
+
+test('findOrphans: dangling link into source is reported', () => {
+  const base = path.join(tmp, 'target')
+  const root = path.join(base, '.claude', 'skills')
+  fs.mkdirSync(root, { recursive: true })
+  const sourceRoot = path.join(tmp, 'repo', 'skills')
+  fs.symlinkSync(path.join(sourceRoot, 'gone'), path.join(root, 'gone'), 'dir')
+  const orphans = findOrphans(base, ['.claude'], sourceRoot)
+  assert.equal(orphans.length, 1)
+  assert.equal(orphans[0].name, 'gone')
+})
+
+test('findOrphans: valid link and foreign broken link are NOT reported', () => {
+  const base = path.join(tmp, 'target')
+  const root = path.join(base, '.claude', 'skills')
+  fs.mkdirSync(root, { recursive: true })
+  const sourceRoot = path.join(tmp, 'repo', 'skills')
+  fs.mkdirSync(path.join(sourceRoot, 'demo2'), { recursive: true })
+  fs.symlinkSync(path.join(sourceRoot, 'demo2'), path.join(root, 'demo2'), 'dir') // valid
+  fs.symlinkSync('/nope/foreign', path.join(root, 'foreign'), 'dir')              // foreign+broken
+  const orphans = findOrphans(base, ['.claude'], sourceRoot)
+  assert.deepEqual(orphans.map((o) => o.name), [])
+})
+
+test('findOrphans: missing target dir yields empty (no throw)', () => {
+  assert.deepEqual(findOrphans(path.join(tmp, 'nope'), ['.claude'], tmp), [])
 })
