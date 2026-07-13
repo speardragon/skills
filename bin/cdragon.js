@@ -355,6 +355,7 @@ async function unlinkCommand(opts) {
 
 async function pruneCommand(opts) {
   const skillsDir = resolveSkillsDir(opts)
+  const folders = opts.folders.length ? opts.folders : FOLDERS
   const targets =
     opts.scope === 'global'
       ? [{ label: 'global', base: os.homedir() }]
@@ -366,7 +367,7 @@ async function pruneCommand(opts) {
           ]
 
   const orphans = targets.flatMap((t) =>
-    findOrphans(t.base, FOLDERS, skillsDir).map((o) => ({ ...o, scope: t.label }))
+    findOrphans(t.base, folders, skillsDir).map((o) => ({ ...o, scope: t.label }))
   )
   if (!orphans.length) {
     console.log(c.green('No orphaned links. Nothing to prune.'))

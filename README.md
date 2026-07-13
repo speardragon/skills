@@ -94,7 +94,7 @@ cdragon list                # 사용 가능한 스킬 목록 보기
 cdragon help                # 도움말
 ```
 
-> 스킬 이름이 `status`·`unlink`·`prune`·`list`·`help`·`link`·`rm` 등 예약어와 겹치면 `cdragon link <이름>`으로 명시적으로 링크하세요.
+> 스킬 이름이 `status`·`st`·`unlink`·`rm`·`prune`·`list`·`ls`·`help`·`link` 등 예약어(별칭 포함)와 겹치면 `cdragon link <이름>`으로 명시적으로 링크하세요.
 
 대화형 스킬 선택 화면과 실행 전 요약에는 타겟 폴더별 상태가 표시됩니다 — `✓ 연결됨 · — 없음 · ! 실제 폴더 · ↻ 끊긴 링크`. 예를 들어 `.claude`에만 연결돼 있던 스킬을 `--both`로 실행하면 `.claude = already / .agents + link`처럼 어디가 이미 설치됐고 어디에 새로 연결되는지 한눈에 보입니다.
 

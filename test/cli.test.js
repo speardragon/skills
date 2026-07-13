@@ -73,3 +73,21 @@ test('prune -y removes a dangling repo-link, keeps a foreign link', () => {
   assert.ok(!fs.existsSync(path.join(root, 'definitely-gone')), 'dangling repo-link pruned')
   assert.ok(fs.lstatSync(path.join(root, 'foreign')).isSymbolicLink(), 'foreign link kept')
 })
+
+test('prune --claude honors the folder flag and leaves .agents orphans alone', () => {
+  const repoSkills = path.join(__dirname, '..', 'skills')
+  const claudeRoot = path.join(tmp, '.claude', 'skills')
+  const agentsRoot = path.join(tmp, '.agents', 'skills')
+  fs.mkdirSync(claudeRoot, { recursive: true })
+  fs.mkdirSync(agentsRoot, { recursive: true })
+  fs.symlinkSync(path.join(repoSkills, 'definitely-gone'), path.join(claudeRoot, 'definitely-gone'), 'dir')
+  fs.symlinkSync(path.join(repoSkills, 'definitely-gone'), path.join(agentsRoot, 'definitely-gone'), 'dir')
+
+  const r = spawnSync('node', [CLI, 'prune', '-p', '--claude', '-y'], {
+    cwd: tmp, encoding: 'utf8', input: '',
+    env: { ...process.env, CDRAGON_OFFLINE: '1', NO_COLOR: '1' },
+  })
+  assert.equal(r.status, 0, r.stderr)
+  assert.ok(!fs.existsSync(path.join(claudeRoot, 'definitely-gone')), '.claude orphan pruned')
+  assert.ok(fs.lstatSync(path.join(agentsRoot, 'definitely-gone')).isSymbolicLink(), '.agents orphan untouched')
+})
