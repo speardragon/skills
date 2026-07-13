@@ -86,11 +86,15 @@ npm link        # cdragon 명령을 전역 PATH에 등록
 ### 사용
 
 ```bash
-cdragon          # 대화형: scope(project/global) → 폴더(.claude/.agents) → 스킬 선택
-cdragon status   # 스킬별 설치 현황 매트릭스 (global/project × .claude/.agents)
-cdragon list     # 사용 가능한 스킬 목록 보기
-cdragon help     # 도움말
+cdragon                     # 대화형: scope(project/global) → 폴더(.claude/.agents) → 스킬 선택
+cdragon status              # 스킬별 설치 현황 매트릭스 (global/project × .claude/.agents)
+cdragon unlink [skills...]  # 스킬 심링크 제거 (이 레포를 가리키는 것만)
+cdragon prune               # 레포에서 사라진 스킬의 고아 링크 정리
+cdragon list                # 사용 가능한 스킬 목록 보기
+cdragon help                # 도움말
 ```
+
+> 스킬 이름이 `status`·`unlink`·`prune`·`list`·`help`·`link`·`rm` 등 예약어와 겹치면 `cdragon link <이름>`으로 명시적으로 링크하세요.
 
 대화형 스킬 선택 화면과 실행 전 요약에는 타겟 폴더별 상태가 표시됩니다 — `✓ 연결됨 · — 없음 · ! 실제 폴더 · ↻ 끊긴 링크`. 예를 들어 `.claude`에만 연결돼 있던 스킬을 `--both`로 실행하면 `.claude = already / .agents + link`처럼 어디가 이미 설치됐고 어디에 새로 연결되는지 한눈에 보입니다.
 
@@ -114,6 +118,8 @@ cdragon --global --both tdd grill-me     # ~/.claude, ~/.agents 양쪽에 일부
 | `--refresh`                        | 갱신 주기(1시간)를 무시하고 즉시 미러 갱신   |
 
 같은 대상을 가리키는 심링크는 그대로 두고, 다른 곳을 가리키면 다시 연결합니다. 이미 존재하는 **실제 디렉터리**(예전에 복사 방식으로 설치된 스킬)는 기본적으로 건너뛰지만, 대화형에서는 교체 여부를 물어보고 `--force`를 주면 바로 교체합니다. 교체 시 원본 폴더는 삭제하지 않고 같은 위치의 `skills-backup/`으로 옮겨둡니다.
+
+`unlink`은 이 레포를 가리키는 심링크만 지웁니다 — 실제 폴더나 다른 곳을 가리키는 링크는 건드리지 않습니다. `prune`은 레포에서 삭제·개명된 스킬의 깨진 링크만 정리합니다. `cdragon status`는 그런 고아 링크를 하단에 표시합니다.
 
 ### 스킬 최신화
 
