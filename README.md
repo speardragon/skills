@@ -18,9 +18,10 @@
 | `setup-matt-pocock-skills` | 엔지니어링 스킬용 이슈 트래커·트리아지 설정                   |
 | `tdd`                      | red-green-refactor 기반 테스트 주도 개발                      |
 | `to-html`                  | 콘텐츠를 브랜드 디자인이 적용된 단일 HTML 파일로 렌더링       |
-| `to-issues`                | 계획·스펙·PRD를 독립적으로 집을 수 있는 이슈로 분해           |
-| `to-prd`                   | 현재 대화를 PRD로 정리해 이슈 트래커에 발행                   |
+| `to-tickets`               | 계획·스펙·대화를 blocking 관계가 있는 티켓으로 분해           |
+| `to-spec`                  | 현재 대화를 스펙으로 정리해 이슈 트래커에 발행                |
 | `unknowns`                 | 작업 착수 전 map/territory 갭(모르는 것)을 구조적으로 발견    |
+| `writing-great-skills`     | 스킬을 예측 가능하게 작성·편집하기 위한 원칙·어휘 레퍼런스     |
 
 ## Install (Claude Code plugin)
 
@@ -160,7 +161,7 @@ cd skills
 
 ## Credits
 
-- `grill-me`, `to-issues`, `to-prd`, `tdd`, `setup-matt-pocock-skills` — [mattpocock/skills](https://github.com/mattpocock/skills) (MIT)
+- `grill-me`, `to-tickets`, `to-spec`, `tdd`, `setup-matt-pocock-skills`, `writing-great-skills` — [mattpocock/skills](https://github.com/mattpocock/skills) (MIT)
 - `agent-browser` — [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)
 
 스킬은 [vercel `skills` CLI](https://github.com/vercel-labs/agent-skills)로 관리되며, 출처는 `skills-lock.json`에 기록됩니다.
