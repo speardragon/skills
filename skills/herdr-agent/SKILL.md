@@ -63,6 +63,8 @@ NEW_PANE=$(herdr workspace create --cwd "$CWD" --no-focus \
   | python3 -c 'import sys,json; print(json.load(sys.stdin)["result"]["root_pane"]["pane_id"])')
 ```
 
+> herdr 0.7.4+ also has a one-step `herdr agent start <name> [--split right|down] [--workspace ID] [--no-focus] -- <argv...>` that creates the location **and** launches the agent together. We keep the explicit two-step (create location → §3 `pane run`) here on purpose: §3 needs the `NEW_PANE` id to inject the delegation/identity header and later receive the callback, and the two-step gives us that id plus a clean point to check for first-run blockers before delivering the task. Use `agent start` for the no-task "just open an agent" case if you prefer.
+
 ### 3. Hand off the task and return — the core (async by default)
 
 The default assumption: the agent is spawned **to do a task**, and you should **not block** until it finishes. You wait only long enough to deliver the task, hand it the task plus your identity and a human-gated callback protocol, then end your turn. Crucially, the child **does not report back on its own** — it works, then waits, and only reports to you **after the human manager at its pane approves** (and after asking first). This keeps a human in the loop before a delegated result re-triggers you.
