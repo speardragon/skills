@@ -20,7 +20,9 @@ this means you can:
 
 the `herdr` binary is available in your PATH. its workspace, tab, pane, agent, worktree, notification, and integration commands talk to the running herdr instance over a local unix socket.
 
-this file targets **herdr 0.7.5+**. verify with `herdr --version`. 0.7.5 renamed the wait and agent-send commands (`herdr wait output` → `herdr pane wait-output`, `herdr wait agent-status` → `herdr agent wait`, `herdr agent send` → `herdr agent send-keys`) and redefined `herdr agent start` — on an older binary those forms do not exist, so suggest `herdr update` to the user and treat the installed binary's `--help` as the authority. if you need the raw protocol or full api reference, read the [socket api docs](https://herdr.dev/docs/socket-api/).
+this file targets **herdr 0.7.5+**. verify with `herdr --version`. 0.7.5 renamed the wait and agent-send commands (`herdr wait output` → `herdr pane wait-output`, `herdr wait agent-status` → `herdr agent wait`, `herdr agent send` → `herdr agent send-keys`) and redefined `herdr agent start` — on an older binary those forms do not exist, so suggest `herdr update` to the user.
+
+whenever syntax is in doubt, the installed binary is the authority: `herdr <group> --help`, or run a command group bare (`herdr agent`, `herdr pane`) to print its subcommands. two discovery traps: bare `herdr` is not discovery — it launches or attaches the TUI — and omitting arguments is not a safe probe on mutating commands — `herdr workspace create` is valid with defaults and will execute. if you need the raw protocol or full api reference, read the [socket api docs](https://herdr.dev/docs/socket-api/).
 
 ## concepts
 
@@ -268,22 +270,20 @@ herdr notification show "tests passed" --body "42 passed, 0 failed" --sound done
 
 ## recipes
 
-### run a server and wait until it is ready
+every recipe that needs a sibling pane starts from this block (direction per geometry — wide pane `right`, narrow or tall pane `down`):
 
 ```bash
 NEW_PANE=$(herdr pane split --current --direction right --cwd "$PWD" --no-focus | python3 -c 'import sys,json; print(json.load(sys.stdin)["result"]["pane"]["pane_id"])')
+```
+
+### run a command and wait for its output
+
+the same shape covers servers ("ready"), tests ("test result"), and builds:
+
+```bash
 herdr pane run "$NEW_PANE" "npm run dev"
 herdr pane wait-output "$NEW_PANE" --match "ready" --timeout 30000
 herdr pane read "$NEW_PANE" --source recent --lines 20
-```
-
-### run tests in a separate pane and inspect the result
-
-```bash
-NEW_PANE=$(herdr pane split --current --direction down --cwd "$PWD" --no-focus | python3 -c 'import sys,json; print(json.load(sys.stdin)["result"]["pane"]["pane_id"])')
-herdr pane run "$NEW_PANE" "cargo test"
-herdr pane wait-output "$NEW_PANE" --match "test result" --timeout 60000
-herdr pane read "$NEW_PANE" --source recent --lines 30
 ```
 
 ### check what another agent is working on
@@ -296,7 +296,6 @@ herdr agent read w1:p1 --source recent-unwrapped --lines 80
 ### spawn a new agent and give it a task
 
 ```bash
-NEW_PANE=$(herdr pane split --current --direction right --cwd "$PWD" --no-focus | python3 -c 'import sys,json; print(json.load(sys.stdin)["result"]["pane"]["pane_id"])')
 herdr agent start reviewer --kind claude --pane "$NEW_PANE"
 herdr agent prompt reviewer "review the test coverage in src/api/" --wait --timeout 120000
 herdr agent read reviewer --source recent-unwrapped --lines 120
@@ -316,5 +315,5 @@ herdr agent read w1:p1 --source recent-unwrapped --lines 100
 - use `pane read` for output that already exists; `pane wait-output` searches existing output first and then polls for more.
 - `--no-focus` on split, tab create, and workspace create keeps the user's current focus unchanged. do not close workspaces, tabs, or panes you did not create unless the user asked.
 - if `--lines` stops revealing more of a completed agent response, the agent is likely on the terminal's alternate screen and the missing rows never entered scrollback. as a fallback, ask that agent to write its full response to a file in a temporary directory and reply with the path, then read the file.
-- never run `herdr server stop` from an active session unless the user explicitly intends to stop the server and every pane process in it.
+- never run `herdr server stop` from an active session unless the user explicitly intends to stop the server and every pane process in it, and never kill the main herdr process — experiments that need an isolated server belong in a named session (`herdr --session <name>`).
 - if you are running inside herdr, the `HERDR_ENV` environment variable is set to `1`.
