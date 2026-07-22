@@ -6,7 +6,7 @@ const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
 
-const { linkSkill, linkStatus, skillStatuses, unlinkSkill, findOrphans } = require('../src/link')
+const { linkSkill, linkStatus, skillStatuses, unlinkSkill, findOrphans, foldersForScope } = require('../src/link')
 
 let tmp, source, target
 
@@ -21,6 +21,11 @@ beforeEach(() => {
 
 afterEach(() => {
   fs.rmSync(tmp, { recursive: true, force: true })
+})
+
+test('foldersForScope: .gemini is global-only, others apply to both scopes', () => {
+  assert.deepEqual(foldersForScope('global'), ['.claude', '.agents', '.gemini'])
+  assert.deepEqual(foldersForScope('project'), ['.claude', '.agents'])
 })
 
 test('linkStatus: none when nothing exists', () => {

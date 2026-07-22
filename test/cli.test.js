@@ -14,12 +14,13 @@ beforeEach(() => { tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cdragon-cli-')) 
 afterEach(() => { fs.rmSync(tmp, { recursive: true, force: true }) })
 
 // Runs the CLI in the temp dir with a non-TTY stdin (spawnSync pipes stdin).
-function run(args) {
+// `extraEnv` overrides — e.g. HOME so global scope resolves inside the temp dir.
+function run(args, extraEnv = {}) {
   return spawnSync('node', [CLI, ...args], {
     cwd: tmp,
     encoding: 'utf8',
     input: '',
-    env: { ...process.env, CDRAGON_OFFLINE: '1', NO_COLOR: '1' },
+    env: { ...process.env, CDRAGON_OFFLINE: '1', NO_COLOR: '1', ...extraEnv },
   })
 }
 
@@ -28,6 +29,33 @@ test('non-TTY: -y links a fresh target successfully', () => {
   assert.equal(r.status, 0, r.stderr)
   const link = path.join(tmp, '.claude', 'skills', 'tdd')
   assert.ok(fs.lstatSync(link).isSymbolicLink())
+})
+
+test('--gemini -g links into ~/.gemini/skills (global scope)', () => {
+  const r = run(['-g', '--gemini', 'tdd', '-y'], { HOME: tmp })
+  assert.equal(r.status, 0, r.stderr)
+  assert.ok(fs.lstatSync(path.join(tmp, '.gemini', 'skills', 'tdd')).isSymbolicLink())
+})
+
+test('--gemini -p warns and skips (project scope has no valid target)', () => {
+  const r = run(['-p', '--gemini', 'tdd', '-y'])
+  assert.notEqual(r.status, 0, 'no valid folder → non-zero exit')
+  assert.match(r.stdout + r.stderr, /global-only/i)
+  assert.ok(!fs.existsSync(path.join(tmp, '.gemini')), 'no project .gemini created')
+})
+
+test('--all-targets spans .gemini globally but not per-project', () => {
+  const g = run(['-g', '--all-targets', 'tdd', '-y'], { HOME: tmp })
+  assert.equal(g.status, 0, g.stderr)
+  for (const d of ['.claude', '.agents', '.gemini']) {
+    assert.ok(fs.lstatSync(path.join(tmp, d, 'skills', 'tdd')).isSymbolicLink(), `${d} linked globally`)
+  }
+
+  const p = run(['-p', '--all-targets', 'to-html', '-y'])
+  assert.equal(p.status, 0, p.stderr)
+  assert.ok(fs.lstatSync(path.join(tmp, '.claude', 'skills', 'to-html')).isSymbolicLink())
+  assert.ok(fs.lstatSync(path.join(tmp, '.agents', 'skills', 'to-html')).isSymbolicLink())
+  assert.ok(!fs.existsSync(path.join(tmp, '.gemini', 'skills', 'to-html')), 'no project-scoped .gemini link')
 })
 
 test('non-TTY: real-folder conflict without -y/-f fails clearly, not silently', () => {

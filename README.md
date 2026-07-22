@@ -51,7 +51,7 @@ npx skills add speardragon/skills/saju        # 특정 스킬만 설치
 
 ## `cdragon` CLI
 
-이 레포의 스킬을 원하는 위치의 `.claude/skills` 또는 `.agents/skills` 에 **심링크**로 연결하는 CLI입니다. 플러그인 설치 대신 로컬 디렉터리에 바로 붙이고 싶을 때 사용합니다.
+이 레포의 스킬을 원하는 위치의 `.claude/skills`·`.agents/skills`·`.gemini/skills` 에 **심링크**로 연결하는 CLI입니다. 플러그인 설치 대신 로컬 디렉터리에 바로 붙이고 싶을 때 사용합니다.
 
 ### 설치
 
@@ -87,8 +87,8 @@ npm link        # cdragon 명령을 전역 PATH에 등록
 ### 사용
 
 ```bash
-cdragon                     # 대화형: scope(project/global) → 폴더(.claude/.agents) → 스킬 선택
-cdragon status              # 스킬별 설치 현황 매트릭스 (global/project × .claude/.agents)
+cdragon                     # 대화형: scope(project/global) → 폴더(.claude/.agents/.gemini) → 스킬 선택
+cdragon status              # 스킬별 설치 현황 매트릭스 (global/project × .claude/.agents/.gemini)
 cdragon unlink [skills...]  # 스킬 심링크 제거 (이 레포를 가리키는 것만)
 cdragon prune               # 레포에서 사라진 스킬의 고아 링크 정리
 cdragon list                # 사용 가능한 스킬 목록 보기
@@ -97,21 +97,24 @@ cdragon help                # 도움말
 
 > 스킬 이름이 `status`·`st`·`unlink`·`rm`·`prune`·`list`·`ls`·`help`·`link` 등 예약어(별칭 포함)와 겹치면 `cdragon link <이름>`으로 명시적으로 링크하세요.
 
-대화형 스킬 선택 화면과 실행 전 요약에는 타겟 폴더별 상태가 표시됩니다 — `✓ 연결됨 · — 없음 · ! 실제 폴더 · ↻ 끊긴 링크`. 예를 들어 `.claude`에만 연결돼 있던 스킬을 `--both`로 실행하면 `.claude = already / .agents + link`처럼 어디가 이미 설치됐고 어디에 새로 연결되는지 한눈에 보입니다.
+대화형 스킬 선택 화면과 실행 전 요약에는 타겟 폴더별 상태가 표시됩니다 — `✓ 연결됨 · — 없음 · ! 실제 폴더 · ↻ 끊긴 링크`. 예를 들어 `.claude`에만 연결돼 있던 스킬을 `--all-targets`로 실행하면 `.claude = already / .agents + link`처럼 어디가 이미 설치됐고 어디에 새로 연결되는지 한눈에 보입니다.
+
+> **Antigravity**는 global은 `~/.gemini/skills`, project는 `.agents/skills`를 읽습니다. 그래서 `--gemini`는 **global 전용**이고, 프로젝트 단위 Antigravity는 `--agents`로 커버됩니다. `.gemini`는 project scope의 picker·status 매트릭스에 나타나지 않으며, `--gemini --project`는 경고 후 건너뜁니다.
 
 대화형 화살표 UI 대신 플래그로 비대화형 실행도 가능합니다.
 
 ```bash
-cdragon --project --claude --all -y      # 현재 폴더의 .claude/skills 에 전부 연결
-cdragon --global --both tdd grill-me     # ~/.claude, ~/.agents 양쪽에 일부만 연결
+cdragon --project --claude --all -y         # 현재 폴더의 .claude/skills 에 전부 연결
+cdragon --global --all-targets tdd grill-me # ~/.claude, ~/.agents, ~/.gemini 전부에 일부만 연결
 ```
 
-| 플래그                             | 의미                                         |
-| ---------------------------------- | -------------------------------------------- |
-| `-p, --project`                    | 현재 디렉터리에 연결                         |
-| `-g, --global`                     | 홈 디렉터리(`~/.claude`, `~/.agents`)에 연결 |
-| `--claude` / `--agents` / `--both` | 대상 폴더 선택                               |
-| `-a, --all`                        | 모든 스킬 연결                               |
+| 플래그                                        | 의미                                                     |
+| --------------------------------------------- | -------------------------------------------------------- |
+| `-p, --project`                               | 현재 디렉터리에 연결                                     |
+| `-g, --global`                                | 홈 디렉터리(`~/.claude`, `~/.agents`, `~/.gemini`)에 연결 |
+| `--claude` / `--agents` / `--gemini`          | 대상 폴더 선택 (`--gemini`는 global 전용)                |
+| `--all-targets`                               | 해당 scope에서 유효한 폴더 전부                          |
+| `-a, --all`                                   | 모든 스킬 연결                                           |
 | `--skills a,b,c`                   | 특정 스킬만 연결                             |
 | `-y, --yes`                        | 확인 프롬프트 건너뛰기                       |
 | `-f, --force`                      | 자리를 차지한 실제 폴더를 심링크로 교체      |

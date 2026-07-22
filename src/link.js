@@ -4,8 +4,22 @@ const fs = require('node:fs')
 const path = require('node:path')
 
 // The target folder conventions cdragon links into — the single source of truth
-// for the CLI's flag handling, folder picker, and status matrix.
-const FOLDERS = ['.claude', '.agents']
+// for the CLI's flag handling, folder picker, and status matrix. Each target
+// declares which scopes it's valid for: Antigravity reads ~/.gemini/skills
+// globally but reuses .agents/skills per-project, so .gemini is global-only.
+const TARGETS = [
+  { folder: '.claude', scopes: ['global', 'project'] },
+  { folder: '.agents', scopes: ['global', 'project'] },
+  { folder: '.gemini', scopes: ['global'] },
+]
+
+// Every folder name, order preserved — for callers that don't care about scope.
+const FOLDERS = TARGETS.map((t) => t.folder)
+
+// Folders valid for a given scope ('global' | 'project').
+function foldersForScope(scope) {
+  return TARGETS.filter((t) => t.scopes.includes(scope)).map((t) => t.folder)
+}
 
 // What lives at linkPath, relative to sourceDir?
 //   linked — symlink pointing at sourceDir
@@ -144,7 +158,9 @@ module.exports = {
   linkSkills,
   linkStatus,
   skillStatuses,
+  TARGETS,
   FOLDERS,
+  foldersForScope,
   unlinkSkill,
   unlinkSkills,
   findOrphans,

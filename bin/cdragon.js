@@ -9,7 +9,7 @@ const pkg = require('../package.json')
 const c = require('../src/colors')
 const prompt = require('../src/prompt')
 const { resolveSkillsDir, discoverSkills } = require('../src/skills')
-const { linkSkills, skillStatuses, FOLDERS, unlinkSkills, findOrphans } = require('../src/link')
+const { linkSkills, skillStatuses, FOLDERS, foldersForScope, unlinkSkills, findOrphans } = require('../src/link')
 
 const truncate = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
 
@@ -62,7 +62,7 @@ function groupBySource(skills) {
 }
 
 function parseArgs(args) {
-  const opts = { scope: null, folders: [], all: false, skills: [], yes: false, force: false }
+  const opts = { scope: null, folders: [], allTargets: false, all: false, skills: [], yes: false, force: false }
 
   for (let i = 0; i < args.length; i++) {
     const a = args[i]
@@ -70,7 +70,8 @@ function parseArgs(args) {
     else if (a === '--project' || a === '-p') opts.scope = 'project'
     else if (a === '--claude') opts.folders.push('.claude')
     else if (a === '--agents') opts.folders.push('.agents')
-    else if (a === '--both') opts.folders.push(...FOLDERS)
+    else if (a === '--gemini') opts.folders.push('.gemini')
+    else if (a === '--all-targets') opts.allTargets = true
     else if (a === '--all' || a === '-a') opts.all = true
     else if (a === '--skills') opts.skills.push(...(args[++i] || '').split(',').map((s) => s.trim()).filter(Boolean))
     else if (a === '--yes' || a === '-y') opts.yes = true
@@ -91,7 +92,7 @@ ${c.bold('cdragon')} — symlink this repo's agent skills into a target location
 ${c.bold('Usage')}
   cdragon                 Interactive: pick scope, folder(s) and skills to link
   cdragon [skills...]     Link named skills (skips the skill picker)
-  cdragon status          Where is each skill installed? (global/project × .claude/.agents)
+  cdragon status          Where is each skill installed? (global/project × .claude/.agents/.gemini)
   cdragon unlink [skills...]  Remove skill symlinks (only ones pointing at this repo)
   cdragon prune              Remove orphaned links (skills deleted/renamed in the repo)
   cdragon list            List available skills
@@ -99,10 +100,11 @@ ${c.bold('Usage')}
 
 ${c.bold('Flags')} ${c.dim('(skip the matching prompt)')}
   -p, --project           Link into the current directory ${c.dim('(default prompt)')}
-  -g, --global            Link into your home dir (~/.claude, ~/.agents)
+  -g, --global            Link into your home dir (~/.claude, ~/.agents, ~/.gemini)
       --claude            Target .claude/skills
       --agents            Target .agents/skills
-      --both              Target both
+      --gemini            Target .gemini/skills ${c.dim('(global only — Antigravity)')}
+      --all-targets       Target every folder valid for the scope
   -a, --all               Link every skill
       --skills a,b,c      Link a specific comma-separated set
   -y, --yes               Skip the confirmation prompt
@@ -110,9 +112,13 @@ ${c.bold('Flags')} ${c.dim('(skip the matching prompt)')}
       --offline           Don't refresh the skills mirror over the network
       --refresh           Force-refresh the skills mirror now
 
+${c.bold('Notes')}
+  Antigravity reads ~/.gemini/skills globally and .agents/skills per-project,
+  so --gemini is global-only; use --agents for a project-scoped Antigravity.
+
 ${c.bold('Examples')}
   cdragon --project --claude --all -y
-  cdragon -g --both tdd handoff
+  cdragon -g --all-targets tdd handoff
 `)
 }
 
@@ -144,29 +150,28 @@ function statusCommand(syncOpts) {
   }
 
   const targets = [
-    { label: 'global', base: os.homedir() },
-    { label: 'project', base: process.cwd() },
+    { label: 'global', base: os.homedir(), folders: foldersForScope('global') },
+    { label: 'project', base: process.cwd(), folders: foldersForScope('project') },
   ]
   // Column width = longest folder label (sans dot) + 3 spaces of gutter.
   const COL = Math.max(...FOLDERS.map((f) => f.slice(1).length)) + 3
   const nameW = Math.max(...skills.map((s) => s.name.length))
   const namePad = (s) => s.padEnd(nameW + 2)
-  const groupW = COL * FOLDERS.length
 
   console.log(`\n${c.bold('Install status')}  ${c.dim(`project = ${process.cwd()}`)}`)
-  console.log('  ' + namePad('') + targets.map((t) => c.bold(t.label.padEnd(groupW))).join(''))
-  console.log('  ' + namePad('') + targets.map(() => FOLDERS.map((f) => c.dim(f.slice(1).padEnd(COL))).join('')).join(''))
+  console.log('  ' + namePad('') + targets.map((t) => c.bold(t.label.padEnd(COL * t.folders.length))).join(''))
+  console.log('  ' + namePad('') + targets.map((t) => t.folders.map((f) => c.dim(f.slice(1).padEnd(COL))).join('')).join(''))
 
   for (const skill of skills) {
     const cells = targets
-      .flatMap((t) => skillStatuses(skill, t.base, FOLDERS).map((s) => s.status))
+      .flatMap((t) => skillStatuses(skill, t.base, t.folders).map((s) => s.status))
       .map((st) => markCell(st, COL))
       .join('')
     console.log('  ' + c.cyan(namePad(skill.name)) + cells)
   }
 
   const orphans = targets.flatMap((t) =>
-    findOrphans(t.base, FOLDERS, skillsDir).map((o) => ({ ...o, scope: t.label }))
+    findOrphans(t.base, t.folders, skillsDir).map((o) => ({ ...o, scope: t.label }))
   )
   if (orphans.length) {
     console.log(`\n  ${c.yellow(`Orphaned links (${orphans.length})`)} ${c.dim('— source gone; run `cdragon prune`')}`)
@@ -183,14 +188,30 @@ async function chooseTargets(opts) {
   if (!scope) {
     scope = await prompt.select('Install scope?', [
       { label: `project  ${c.dim('(current directory)')}`, value: 'project' },
-      { label: `global   ${c.dim('(~/.claude, ~/.agents)')}`, value: 'global' },
+      { label: `global   ${c.dim('(~/.claude, ~/.agents, ~/.gemini)')}`, value: 'global' },
     ])
   }
-  let folders = opts.folders
-  if (!folders.length) {
+  const valid = foldersForScope(scope)
+
+  let folders
+  if (opts.allTargets) {
+    folders = valid
+  } else if (opts.folders.length) {
+    // Drop folders that don't apply to the chosen scope (e.g. --gemini --project),
+    // warning so the skip is never silent.
+    folders = []
+    for (const f of [...new Set(opts.folders)]) {
+      if (valid.includes(f)) folders.push(f)
+      else if (f === '.gemini') {
+        console.log(c.yellow(`  .gemini is global-only (Antigravity uses .agents/skills per-project) — skipping.`))
+      } else {
+        console.log(c.yellow(`  ${f} is not valid for ${scope} scope — skipping.`))
+      }
+    }
+  } else {
     folders = await prompt.multiselect(
       'Which folder(s) to link into?',
-      FOLDERS.map((f) => ({ label: `${f}/skills`, value: f }))
+      valid.map((f) => ({ label: `${f}/skills`, value: f }))
     )
   }
   if (!folders.length) throw new Error('No target folder selected.')
@@ -355,7 +376,6 @@ async function unlinkCommand(opts) {
 
 async function pruneCommand(opts) {
   const skillsDir = resolveSkillsDir(opts)
-  const folders = opts.folders.length ? opts.folders : FOLDERS
   const targets =
     opts.scope === 'global'
       ? [{ label: 'global', base: os.homedir() }]
@@ -366,8 +386,13 @@ async function pruneCommand(opts) {
             { label: 'project', base: process.cwd() },
           ]
 
+  // Per scope, honor an explicit folder flag but keep only folders valid there.
+  const foldersFor = (scope) => {
+    const valid = foldersForScope(scope)
+    return opts.folders.length ? opts.folders.filter((f) => valid.includes(f)) : valid
+  }
   const orphans = targets.flatMap((t) =>
-    findOrphans(t.base, folders, skillsDir).map((o) => ({ ...o, scope: t.label }))
+    findOrphans(t.base, foldersFor(t.label), skillsDir).map((o) => ({ ...o, scope: t.label }))
   )
   if (!orphans.length) {
     console.log(c.green('No orphaned links. Nothing to prune.'))
