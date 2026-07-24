@@ -80,6 +80,8 @@ herdr agent start "$NAME" --kind claude --pane "$NEW_PANE" -- --permission-mode 
 - **any other first-run screen** (login, model choice, trust-folder): report it to the user and hand over; choosing on their behalf is not this skill's call.
 - **name already taken**: retry with a suffixed name.
 
+**Session id (when the caller needs resume/tracking later):** read it from `herdr agent get "$NAME"` → `agent.agent_session.value` — the only reliable source. For claude you can pin it upfront (`-- --session-id <uuid>`); resume later with `claude --resume <id>` / `codex resume <id>`. Never scrape agent-side files like `~/.codex/session_index.jsonl` — they lag behind and return stale ids from unrelated sessions.
+
 **Done when:** `agent start` (or the post-confirmation wait) has returned success for every delegate.
 
 ## 4. Dispatch — deliver, verify, return
