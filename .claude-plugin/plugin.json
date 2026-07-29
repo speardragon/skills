@@ -1,12 +1,13 @@
 {
   "name": "speardragon-skills",
   "version": "0.1.0",
-  "description": "개인 스킬 모음 — agent-browser, grill-me, herdr-agent, herdr-cli, notion-presentation, setup-matt-pocock-skills, tdd, to-html, to-tickets, to-spec, unknowns, writing-great-skills",
+  "description": "개인 스킬 모음 — agent-browser, grill-me, grilling, herdr-agent, herdr-cli, notion-presentation, setup-matt-pocock-skills, tdd, to-html, to-tickets, to-spec, unknowns, writing-great-skills",
   "author": { "name": "speardragon" },
   "keywords": ["skills", "productivity", "engineering", "tdd", "spec", "tickets"],
   "skills": [
     "./skills/agent-browser",
     "./skills/grill-me",
+    "./skills/grilling",
     "./skills/gws-sheets",
     "./skills/gws-sheets-append",
     "./skills/gws-sheets-read",
