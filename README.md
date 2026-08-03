@@ -15,6 +15,7 @@
 | `grilling`                 | 계획·결정을 한 번에 한 질문씩 끝까지 캐묻는 인터뷰 엔진       |
 | `herdr-agent`              | herdr 안에서 새 탭·분할·워크스페이스에 코딩 에이전트를 띄움   |
 | `herdr-cli`                | herdr를 내부에서 제어 (워크스페이스·탭·분할·에이전트 관리)    |
+| `i-have-adhd`              | ADHD 독자용 출력 형식 — 다음 행동 우선, 번호 매기기, 군더더기 제거 |
 | `notion-presentation`      | 콘텐츠를 Notion 프레젠테이션 모드용 슬라이드 문서로 구성      |
 | `setup-matt-pocock-skills` | 엔지니어링 스킬용 이슈 트래커·트리아지 설정                   |
 | `tdd`                      | red-green-refactor 기반 테스트 주도 개발                      |
@@ -167,6 +168,7 @@ cd skills
 
 - `grill-me`, `to-tickets`, `to-spec`, `tdd`, `setup-matt-pocock-skills`, `writing-great-skills` — [mattpocock/skills](https://github.com/mattpocock/skills) (MIT)
 - `agent-browser` — [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)
+- `i-have-adhd` — [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) (MIT)
 
 스킬은 [vercel `skills` CLI](https://github.com/vercel-labs/agent-skills)로 관리되며, 출처는 `skills-lock.json`에 기록됩니다.
 
