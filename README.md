@@ -10,6 +10,7 @@
 
 | 스킬                       | 설명                                                          |
 | -------------------------- | ------------------------------------------------------------- |
+| `adhd`                     | 병렬 발산 아이디에이션 — 격리된 인지 프레임 5개로 발산 후 수렴 |
 | `agent-browser`            | AI 에이전트용 브라우저 자동화 CLI                             |
 | `grill-me`                 | 계획·설계를 끝까지 캐묻는 인터뷰 (`grilling` 실행용 별칭)     |
 | `grilling`                 | 계획·결정을 한 번에 한 질문씩 끝까지 캐묻는 인터뷰 엔진       |
@@ -169,6 +170,7 @@ cd skills
 - `grill-me`, `to-tickets`, `to-spec`, `tdd`, `setup-matt-pocock-skills`, `writing-great-skills` — [mattpocock/skills](https://github.com/mattpocock/skills) (MIT)
 - `agent-browser` — [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)
 - `i-have-adhd` — [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) (MIT)
+- `adhd` — [UditAkhourii/adhd](https://github.com/UditAkhourii/adhd) (MIT)
 
 스킬은 [vercel `skills` CLI](https://github.com/vercel-labs/agent-skills)로 관리되며, 출처는 `skills-lock.json`에 기록됩니다.
 

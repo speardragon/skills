@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "adhd": {
+      "source": "UditAkhourii/adhd",
+      "sourceType": "github",
+      "skillPath": "skills/adhd/SKILL.md",
+      "computedHash": "aaefa49b161de614f277ce1d51048640b91c8bbea576d6cfe4509e3769bb2b2b"
+    },
     "agent-browser": {
       "source": "vercel-labs/agent-browser",
       "sourceType": "github",
