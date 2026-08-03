@@ -71,8 +71,16 @@ herdr agent start "$NAME" --kind claude --pane "$NEW_PANE" -- --permission-mode 
 | Kind   | auto (default)                         | milder options user may ask for                  |
 | ------ | -------------------------------------- | ------------------------------------------------ |
 | claude | `--permission-mode bypassPermissions`  | `--permission-mode acceptEdits`, `--permission-mode plan` |
-| codex  | `--full-auto`                          | `--yolo` is the *stronger* form (no sandbox) — only on explicit request |
+| codex  | `-s workspace-write -a on-request`     | `-s read-only`; `--dangerously-bypass-approvals-and-sandbox` is the *stronger* form (no sandbox) — only on explicit request |
 | other  | start bare; check that binary's `--help` for an approvals flag if the user wants auto |
+
+(`--full-auto` / `--yolo` no longer exist in current codex — sandbox and approval are separate flags now.)
+
+Any other agent-side flags the user asked for (model, config overrides) also go after the `--`, e.g.:
+
+```bash
+herdr agent start "$NAME" --kind codex --pane "$NEW_PANE" -- -s workspace-write -a on-request -m gpt-5.6-luna -c model_reasoning_effort=max
+```
 
 `agent start` returns only when the agent is detected in the pane and ready for input — it is the readiness check. Handle its failures:
 
@@ -137,7 +145,7 @@ One line per delegate; append config as single tokens:
 
 ```
 - reviewer (w1:p4, split right) — claude · auto · dispatched, reports back ↩
-- fixer (w2:p1, new workspace ~/proj) — codex · full-auto · inline: done ✓ 3 files changed
+- fixer (w2:p1, new workspace ~/proj) — codex · workspace-write/on-request · inline: done ✓ 3 files changed
 - translator (w1:p5, tab) — claude · auto · ⚠ stalled (screen: login prompt)
 ```
 
