@@ -16,6 +16,12 @@
 | `grilling`                 | 계획·결정을 한 번에 한 질문씩 끝까지 캐묻는 인터뷰 엔진       |
 | `herdr-agent`              | herdr 안에서 새 탭·분할·워크스페이스에 코딩 에이전트를 띄움   |
 | `herdr-cli`                | herdr를 내부에서 제어 (워크스페이스·탭·분할·에이전트 관리)    |
+| `html`                     | 자기완결형 단일 HTML 아티팩트 생성 — 리포트·랜딩페이지 등 라우터 |
+| `design-artifact`          | HTML 아티팩트용 비주얼 크리에이티브 디렉션(팔레트·타이포·레이아웃) |
+| `html-wireframe`           | 저충실도 HTML 와이어프레임 — 정보구조·내비게이션·플로우 검증  |
+| `html-prototype`           | 인터랙티브 HTML 목업·프로토타입                               |
+| `html-diagram`             | 아키텍처·시퀀스·상태 등 HTML 다이어그램                       |
+| `html-plan`                | 원본 내용을 보존한 HTML 플랜·로드맵 문서                      |
 | `i-have-adhd`              | ADHD 독자용 출력 형식 — 다음 행동 우선, 번호 매기기, 군더더기 제거 |
 | `notion-presentation`      | 콘텐츠를 Notion 프레젠테이션 모드용 슬라이드 문서로 구성      |
 | `setup-matt-pocock-skills` | 엔지니어링 스킬용 이슈 트래커·트리아지 설정                   |
@@ -171,6 +177,7 @@ cd skills
 - `agent-browser` — [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)
 - `i-have-adhd` — [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) (MIT)
 - `adhd` — [UditAkhourii/adhd](https://github.com/UditAkhourii/adhd) (MIT)
+- `html`, `design-artifact`, `html-wireframe`, `html-prototype`, `html-diagram`, `html-plan` — [plannotator/effective-html](https://github.com/plannotator/effective-html) (MIT)
 
 스킬은 [vercel `skills` CLI](https://github.com/vercel-labs/agent-skills)로 관리되며, 출처는 `skills-lock.json`에 기록됩니다.
 
