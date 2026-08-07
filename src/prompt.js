@@ -42,6 +42,19 @@ function scrollWindow(active, total, size, prevStart) {
   return Math.max(0, Math.min(start, Math.max(0, total - size)))
 }
 
+// Push the cursor down `n` blank lines before the first draw of a scrollable
+// prompt. Whatever was printed just above (earlier prompts, log lines) may
+// leave the cursor with less than a full screen of room below it — if the
+// first draw is taller than that, the terminal scrolls to fit it, but that
+// draw doesn't yet know to compensate by moving up first (nothing has been
+// drawn to move up from). Reserving the space first means: if a scroll is
+// needed, it happens now, against blank lines, and the reserved block ends
+// up fully on-screen with the cursor sitting right after it — ready for the
+// normal "move up N lines" redraw to find the block exactly where it left it.
+function reserve(n) {
+  process.stdout.write('\n'.repeat(n))
+}
+
 // Single-choice radio list. Resolves the chosen option's `value`.
 function select(message, choices) {
   requireTTY()
@@ -50,13 +63,12 @@ function select(message, choices) {
     const size = visibleRows(choices.length)
     const totalLines = size + 1
     let scrollTop = 0
-    let drawn = false
 
     const draw = () => {
       scrollTop = scrollWindow(index, choices.length, size, scrollTop)
       const scrolled = size < choices.length
       const pos = scrolled ? c.dim(` (${scrollTop + 1}-${scrollTop + size} of ${choices.length} — ↑↓ scroll)`) : ''
-      let out = drawn ? `\x1b[${totalLines}A` : ''
+      let out = `\x1b[${totalLines}A`
       out += `\x1b[2K${c.cyan('?')} ${c.bold(message)}${pos}\n`
       for (let row = 0; row < size; row++) {
         const i = scrollTop + row
@@ -66,7 +78,6 @@ function select(message, choices) {
         out += `\x1b[2K${pointer} ${active ? c.cyan(choice.label) : choice.label}\n`
       }
       process.stdout.write(out)
-      drawn = true
     }
 
     const onKey = (_str, key) => {
@@ -88,6 +99,7 @@ function select(message, choices) {
 
     setup()
     process.stdin.on('keypress', onKey)
+    reserve(totalLines)
     draw()
   })
 }
@@ -105,7 +117,6 @@ function multiselect(message, choices) {
     const totalLines = size + 1
     let scrollTop = 0
     let pos = 0 // index into `selectable`
-    let drawn = false
 
     const cursor = () => selectable[pos]
 
@@ -113,7 +124,7 @@ function multiselect(message, choices) {
       scrollTop = scrollWindow(cursor(), choices.length, size, scrollTop)
       const scrolled = size < choices.length
       const posHint = scrolled ? c.dim(` (${scrollTop + 1}-${scrollTop + size} of ${choices.length})`) : ''
-      let out = drawn ? `\x1b[${totalLines}A` : ''
+      let out = `\x1b[${totalLines}A`
       const hint = c.dim('(↑↓ move · space toggle · a all · enter confirm)')
       out += `\x1b[2K${c.cyan('?')} ${c.bold(message)} ${hint}${posHint}\n`
       for (let row = 0; row < size; row++) {
@@ -129,7 +140,6 @@ function multiselect(message, choices) {
         out += `\x1b[2K  ${pointer} ${box} ${active ? c.cyan(choice.label) : choice.label}\n`
       }
       process.stdout.write(out)
-      drawn = true
     }
 
     const onKey = (str, key) => {
@@ -159,6 +169,7 @@ function multiselect(message, choices) {
 
     setup()
     process.stdin.on('keypress', onKey)
+    reserve(totalLines)
     draw()
   })
 }
