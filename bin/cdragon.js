@@ -237,7 +237,8 @@ async function chooseSkills(opts, skills, base, folders) {
       choices.push({
         value: s.name,
         checked: statuses.some((st) => st.status === 'linked'),
-        label: `${s.name}  ${statusTag(statuses)}  ${c.dim(truncate(s.description, 44))}`,
+        // label: `${s.name}  ${statusTag(statuses)}  ${c.dim(truncate(s.description, 44))}`,
+        label: `${s.name}  ${statusTag(statuses)}`,
       })
     }
   }
