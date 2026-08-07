@@ -24,22 +24,47 @@ function teardown(onKey) {
   process.stdin.pause()
 }
 
+// How many item rows a scrollable list may draw. Fixed for the life of one
+// prompt call — the redraw trick below moves the cursor up by exactly this
+// many lines each time, so the drawn height must never change or the
+// terminal scrolls and the cursor math desyncs (the bug this fixes).
+function visibleRows(total) {
+  const termRows = process.stdout.rows || 24
+  const budget = Math.max(3, termRows - 2) // leave room for the message line + shell prompt
+  return Math.min(total, budget)
+}
+
+// Slide the [start, start+size) window just enough to keep `active` in view.
+function scrollWindow(active, total, size, prevStart) {
+  let start = prevStart
+  if (active < start) start = active
+  if (active >= start + size) start = active - size + 1
+  return Math.max(0, Math.min(start, Math.max(0, total - size)))
+}
+
 // Single-choice radio list. Resolves the chosen option's `value`.
 function select(message, choices) {
   requireTTY()
   return new Promise((resolve) => {
     let index = 0
-    const totalLines = choices.length + 1
+    const size = visibleRows(choices.length)
+    const totalLines = size + 1
+    let scrollTop = 0
     let drawn = false
 
     const draw = () => {
+      scrollTop = scrollWindow(index, choices.length, size, scrollTop)
+      const scrolled = size < choices.length
+      const pos = scrolled ? c.dim(` (${scrollTop + 1}-${scrollTop + size} of ${choices.length} — ↑↓ scroll)`) : ''
       let out = drawn ? `\x1b[${totalLines}A` : ''
-      out += `\x1b[2K${c.cyan('?')} ${c.bold(message)}\n`
-      choices.forEach((choice, i) => {
+      out += `\x1b[2K${c.cyan('?')} ${c.bold(message)}${pos}\n`
+      for (let row = 0; row < size; row++) {
+        const i = scrollTop + row
+        const choice = choices[i]
         const active = i === index
         const pointer = active ? c.cyan('❯') : ' '
         out += `\x1b[2K${pointer} ${active ? c.cyan(choice.label) : choice.label}\n`
-      })
+      }
       process.stdout.write(out)
       drawn = true
     }
@@ -76,26 +101,33 @@ function multiselect(message, choices) {
     const selectable = choices.map((c, i) => (c.header ? -1 : i)).filter((i) => i >= 0)
     // Pre-check any choice flagged `checked` (e.g. already installed).
     const selected = new Set(selectable.filter((i) => choices[i].checked))
-    const totalLines = choices.length + 1
+    const size = visibleRows(choices.length)
+    const totalLines = size + 1
+    let scrollTop = 0
     let pos = 0 // index into `selectable`
     let drawn = false
 
     const cursor = () => selectable[pos]
 
     const draw = () => {
+      scrollTop = scrollWindow(cursor(), choices.length, size, scrollTop)
+      const scrolled = size < choices.length
+      const posHint = scrolled ? c.dim(` (${scrollTop + 1}-${scrollTop + size} of ${choices.length})`) : ''
       let out = drawn ? `\x1b[${totalLines}A` : ''
       const hint = c.dim('(↑↓ move · space toggle · a all · enter confirm)')
-      out += `\x1b[2K${c.cyan('?')} ${c.bold(message)} ${hint}\n`
-      choices.forEach((choice, i) => {
+      out += `\x1b[2K${c.cyan('?')} ${c.bold(message)} ${hint}${posHint}\n`
+      for (let row = 0; row < size; row++) {
+        const i = scrollTop + row
+        const choice = choices[i]
         if (choice.header) {
           out += `\x1b[2K  ${c.bold(choice.label)}\n`
-          return
+          continue
         }
         const active = i === cursor()
         const box = selected.has(i) ? c.green('◉') : '◯'
         const pointer = active ? c.cyan('❯') : ' '
         out += `\x1b[2K  ${pointer} ${box} ${active ? c.cyan(choice.label) : choice.label}\n`
-      })
+      }
       process.stdout.write(out)
       drawn = true
     }
