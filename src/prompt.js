@@ -34,12 +34,70 @@ function visibleRows(total) {
   return Math.min(total, budget)
 }
 
-// Slide the [start, start+size) window just enough to keep `active` in view.
+// Slide the [start, start+size) window just enough to keep `active` in view,
+// plus one row of context (scrolloff) so the window starts moving before the
+// cursor pins itself to the very edge.
 function scrollWindow(active, total, size, prevStart) {
+  const margin = size >= 5 ? 1 : 0
   let start = prevStart
-  if (active < start) start = active
-  if (active >= start + size) start = active - size + 1
+  if (active - margin < start) start = active - margin
+  if (active + margin >= start + size) start = active + margin - size + 1
   return Math.max(0, Math.min(start, Math.max(0, total - size)))
+}
+
+// Visible width of one code point. Hangul and CJK render two columns wide;
+// everything else in our labels is one column.
+function charWidth(cp) {
+  if (
+    (cp >= 0x1100 && cp <= 0x115f) || // Hangul Jamo
+    (cp >= 0x2e80 && cp <= 0xa4cf) || // CJK radicals … Yi
+    (cp >= 0xac00 && cp <= 0xd7a3) || // Hangul syllables
+    (cp >= 0xf900 && cp <= 0xfaff) || // CJK compat ideographs
+    (cp >= 0xfe30 && cp <= 0xfe4f) || // CJK compat forms
+    (cp >= 0xff00 && cp <= 0xff60) || // fullwidth forms
+    (cp >= 0xffe0 && cp <= 0xffe6)
+  ) {
+    return 2
+  }
+  return 1
+}
+
+const ANSI_RE = /^\x1b\[[0-9;]*m/
+
+// Every drawn line must occupy exactly one terminal row: the redraw trick
+// moves the cursor up by the number of lines *written*, so a single label
+// soft-wrapping to two rows desyncs the cursor math the moment it scrolls
+// into view. Clamp a line (which may contain ANSI color codes — they pass
+// through at zero width) to `max` visible columns; if content is cut, append
+// an ellipsis and a color reset so a severed color run can't bleed onward.
+function fitToWidth(line, max) {
+  let out = ''
+  let width = 0
+  let i = 0
+  while (i < line.length) {
+    if (line[i] === '\x1b') {
+      const esc = ANSI_RE.exec(line.slice(i))
+      if (esc) {
+        out += esc[0]
+        i += esc[0].length
+        continue
+      }
+    }
+    const cp = line.codePointAt(i)
+    const ch = String.fromCodePoint(cp)
+    const w = charWidth(cp)
+    if (width + w > max - 1) {
+      // Something visible would overflow — cut here unless this is the very
+      // last visible char and it fits exactly in the final column.
+      const rest = line.slice(i + ch.length).replace(/\x1b\[[0-9;]*m/g, '')
+      if (width + w <= max && rest.length === 0) return out + ch
+      return out + '…\x1b[0m'
+    }
+    out += ch
+    width += w
+    i += ch.length
+  }
+  return out
 }
 
 // Push the cursor down `n` blank lines before the first draw of a scrollable
@@ -66,17 +124,19 @@ function select(message, choices) {
 
     const draw = () => {
       scrollTop = scrollWindow(index, choices.length, size, scrollTop)
+      const cols = process.stdout.columns || 80
       const scrolled = size < choices.length
       const pos = scrolled ? c.dim(` (${scrollTop + 1}-${scrollTop + size} of ${choices.length} — ↑↓ scroll)`) : ''
       let out = `\x1b[${totalLines}A`
-      out += `\x1b[2K${c.cyan('?')} ${c.bold(message)}${pos}\n`
+      out += `\x1b[2K${fitToWidth(`${c.cyan('?')} ${c.bold(message)}${pos}`, cols)}\n`
       for (let row = 0; row < size; row++) {
         const i = scrollTop + row
         const choice = choices[i]
         const active = i === index
         const pointer = active ? c.cyan('❯') : ' '
-        out += `\x1b[2K${pointer} ${active ? c.cyan(choice.label) : choice.label}\n`
+        out += `\x1b[2K${fitToWidth(`${pointer} ${active ? c.cyan(choice.label) : choice.label}`, cols)}\n`
       }
+      out += '\x1b[J' // wipe anything stale below the block
       process.stdout.write(out)
     }
 
@@ -122,23 +182,25 @@ function multiselect(message, choices) {
 
     const draw = () => {
       scrollTop = scrollWindow(cursor(), choices.length, size, scrollTop)
+      const cols = process.stdout.columns || 80
       const scrolled = size < choices.length
       const posHint = scrolled ? c.dim(` (${scrollTop + 1}-${scrollTop + size} of ${choices.length})`) : ''
       let out = `\x1b[${totalLines}A`
       const hint = c.dim('(↑↓ move · space toggle · a all · enter confirm)')
-      out += `\x1b[2K${c.cyan('?')} ${c.bold(message)} ${hint}${posHint}\n`
+      out += `\x1b[2K${fitToWidth(`${c.cyan('?')} ${c.bold(message)} ${hint}${posHint}`, cols)}\n`
       for (let row = 0; row < size; row++) {
         const i = scrollTop + row
         const choice = choices[i]
         if (choice.header) {
-          out += `\x1b[2K  ${c.bold(choice.label)}\n`
+          out += `\x1b[2K${fitToWidth(`  ${c.bold(choice.label)}`, cols)}\n`
           continue
         }
         const active = i === cursor()
         const box = selected.has(i) ? c.green('◉') : '◯'
         const pointer = active ? c.cyan('❯') : ' '
-        out += `\x1b[2K  ${pointer} ${box} ${active ? c.cyan(choice.label) : choice.label}\n`
+        out += `\x1b[2K${fitToWidth(`  ${pointer} ${box} ${active ? c.cyan(choice.label) : choice.label}`, cols)}\n`
       }
+      out += '\x1b[J' // wipe anything stale below the block
       process.stdout.write(out)
     }
 
