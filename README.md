@@ -23,7 +23,10 @@
 | `html-diagram`             | 아키텍처·시퀀스·상태 등 HTML 다이어그램                       |
 | `html-plan`                | 원본 내용을 보존한 HTML 플랜·로드맵 문서                      |
 | `i-have-adhd`              | ADHD 독자용 출력 형식 — 다음 행동 우선, 번호 매기기, 군더더기 제거 |
+| `korean-nominal-style`     | 한글 개발 문장을 의미 보존한 채 간결한 개조식으로 변환        |
 | `notion-presentation`      | 콘텐츠를 Notion 프레젠테이션 모드용 슬라이드 문서로 구성      |
+| `react-best-practices`     | Vercel 엔지니어링 React/Next.js 성능 최적화 가이드 (8개 카테고리 70개 규칙) |
+| `review-respond`           | PR 리뷰 코멘트 대응 — 코드로 검증 → 수정 → 답글 → resolve    |
 | `setup-matt-pocock-skills` | 엔지니어링 스킬용 이슈 트래커·트리아지 설정                   |
 | `tdd`                      | red-green-refactor 기반 테스트 주도 개발                      |
 | `to-html`                  | 콘텐츠를 브랜드 디자인이 적용된 단일 HTML 파일로 렌더링       |
@@ -178,6 +181,8 @@ cd skills
 - `i-have-adhd` — [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) (MIT)
 - `adhd` — [UditAkhourii/adhd](https://github.com/UditAkhourii/adhd) (MIT)
 - `html`, `design-artifact`, `html-wireframe`, `html-prototype`, `html-diagram`, `html-plan` — [plannotator/effective-html](https://github.com/plannotator/effective-html) (MIT)
+- `korean-nominal-style` — [hmu332233/skills](https://github.com/hmu332233/skills) (별도 라이선스 명시 없음, 원작자 확인 후 편입)
+- `react-best-practices` — [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) (MIT)
 
 스킬은 [vercel `skills` CLI](https://github.com/vercel-labs/agent-skills)로 관리되며, 출처는 `skills-lock.json`에 기록됩니다.
 
