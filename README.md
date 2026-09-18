@@ -13,6 +13,7 @@
 | `adhd`                     | 병렬 발산 아이디에이션 — 격리된 인지 프레임 5개로 발산 후 수렴 |
 | `adopt-skill`              | 외부 스킬 편입 — 보안 감사 통과 후 `skills-lock.json`·README 갱신 |
 | `agent-browser`            | AI 에이전트용 브라우저 자동화 CLI                             |
+| `deploy`                   | Vercel 프로덕션/프리뷰 배포                                   |
 | `grill-me`                 | 계획·설계를 끝까지 캐묻는 인터뷰 (`grilling` 실행용 별칭)     |
 | `grilling`                 | 계획·결정을 한 번에 한 질문씩 끝까지 캐묻는 인터뷰 엔진       |
 | `herdr-agent`              | herdr 안에서 새 탭·분할·워크스페이스에 코딩 에이전트를 띄움   |
@@ -25,9 +26,11 @@
 | `html-plan`                | 원본 내용을 보존한 HTML 플랜·로드맵 문서                      |
 | `i-have-adhd`              | ADHD 독자용 출력 형식 — 다음 행동 우선, 번호 매기기, 군더더기 제거 |
 | `korean-nominal-style`     | 한글 개발 문장을 의미 보존한 채 간결한 개조식으로 변환        |
+| `logs`                     | Vercel 배포 로그 조회·분석                                    |
 | `notion-presentation`      | 콘텐츠를 Notion 프레젠테이션 모드용 슬라이드 문서로 구성      |
 | `react-best-practices`     | Vercel 엔지니어링 React/Next.js 성능 최적화 가이드 (8개 카테고리 70개 규칙) |
 | `review-respond`           | PR 리뷰 코멘트 대응 — 코드로 검증 → 수정 → 답글 → resolve    |
+| `setup`                    | Vercel CLI 설치·로그인·프로젝트 연결·환경변수 설정            |
 | `setup-matt-pocock-skills` | 엔지니어링 스킬용 이슈 트래커·트리아지 설정                   |
 | `tdd`                      | red-green-refactor 기반 테스트 주도 개발                      |
 | `to-html`                  | 콘텐츠를 브랜드 디자인이 적용된 단일 HTML 파일로 렌더링       |
@@ -184,6 +187,7 @@ cd skills
 - `html`, `design-artifact`, `html-wireframe`, `html-prototype`, `html-diagram`, `html-plan` — [plannotator/effective-html](https://github.com/plannotator/effective-html) (MIT)
 - `korean-nominal-style` — [hmu332233/skills](https://github.com/hmu332233/skills) (별도 라이선스 명시 없음, 원작자 확인 후 편입)
 - `react-best-practices` — [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) (MIT)
+- `deploy`, `logs`, `setup` — [vercel/vercel-deploy-claude-code-plugin](https://github.com/vercel/vercel-deploy-claude-code-plugin) (MIT)
 
 스킬은 [vercel `skills` CLI](https://github.com/vercel-labs/agent-skills)로 관리되며, 출처는 `skills-lock.json`에 기록됩니다.
 

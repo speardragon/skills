@@ -31,6 +31,12 @@
       "skillPath": "skills/code-simplification/SKILL.md",
       "computedHash": "7973e746e8e2ea5004d520da970c15a106824b8d6be1bcff48908aec021f3677"
     },
+    "deploy": {
+      "source": "vercel/vercel-deploy-claude-code-plugin",
+      "sourceType": "github",
+      "skillPath": "skills/deploy/SKILL.md",
+      "computedHash": "955ffcdc239433bb5c8d2ac18235eae5c3bed90380a01afa9c0eb7de033eac3c"
+    },
     "design-artifact": {
       "source": "plannotator/effective-html",
       "sourceType": "github",
@@ -139,11 +145,23 @@
       "skillPath": "skills/local/korean-nominal-style/SKILL.md",
       "computedHash": "e9996ad0bab4737357fe775e42cdbb25e09327ad90cc0791734147d780278e2f"
     },
+    "logs": {
+      "source": "vercel/vercel-deploy-claude-code-plugin",
+      "sourceType": "github",
+      "skillPath": "skills/logs/SKILL.md",
+      "computedHash": "cada9563a88a9b694a32b4579453ba6c60f17b16271d7b7acc2ec176b6a6f29a"
+    },
     "react-best-practices": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/react-best-practices/SKILL.md",
       "computedHash": "ca7b0c0c6e5f2750043f7f0cd72d16ac4e2abc48f9b5500d047a4b77a2506212"
+    },
+    "setup": {
+      "source": "vercel/vercel-deploy-claude-code-plugin",
+      "sourceType": "github",
+      "skillPath": "skills/setup/SKILL.md",
+      "computedHash": "b44edb2cf71c77450a1e72ab33f164e4e702622ed3117477d673a7a203431d84"
     },
     "setup-matt-pocock-skills": {
       "source": "mattpocock/skills",

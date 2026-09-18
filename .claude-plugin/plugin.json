@@ -6,6 +6,7 @@
   "keywords": ["skills", "productivity", "engineering", "tdd", "spec", "tickets"],
   "skills": [
     "./skills/agent-browser",
+    "./skills/deploy",
     "./skills/grill-me",
     "./skills/grilling",
     "./skills/gws-sheets",
@@ -13,7 +14,9 @@
     "./skills/gws-sheets-read",
     "./skills/herdr-agent",
     "./skills/herdr-cli",
+    "./skills/logs",
     "./skills/notion-presentation",
+    "./skills/setup",
     "./skills/setup-matt-pocock-skills",
     "./skills/tdd",
     "./skills/to-html",
