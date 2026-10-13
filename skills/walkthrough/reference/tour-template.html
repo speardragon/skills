@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkthrough</title>
+<style>
+:root{--bg:#f7f7f8;--fg:#1a1a1a;--muted:#6b7078;--card:#ffffff;--line:#e3e5e8;--accent:#2563eb;--accent-fg:#ffffff;--code-bg:#f0f1f3;--add-bg:#e6ffed;--add-fg:#116329;--del-bg:#ffebe9;--del-fg:#a40e26;--key-bg:#eef4ff;--shadow:0 1px 3px rgba(0,0,0,.08)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111214;--fg:#e8e8e8;--muted:#9aa0a6;--card:#1a1b1e;--line:#2a2c31;--accent:#60a5fa;--accent-fg:#0b1220;--code-bg:#1f2126;--add-bg:#12301c;--add-fg:#7ee2a0;--del-bg:#3b1519;--del-fg:#ff9aa2;--key-bg:#172033;--shadow:0 1px 3px rgba(0,0,0,.5)}}
+:root[data-theme="dark"]{--bg:#111214;--fg:#e8e8e8;--muted:#9aa0a6;--card:#1a1b1e;--line:#2a2c31;--accent:#60a5fa;--accent-fg:#0b1220;--code-bg:#1f2126;--add-bg:#12301c;--add-fg:#7ee2a0;--del-bg:#3b1519;--del-fg:#ff9aa2;--key-bg:#172033;--shadow:0 1px 3px rgba(0,0,0,.5)}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg)}
+body{font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+header{position:sticky;top:0;z-index:3;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:12px}
+header h1{font-size:15px;font-weight:600;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.counter{font-size:13px;color:var(--muted);white-space:nowrap}
+.progress{position:sticky;top:45px;z-index:3;height:3px;background:var(--line)}
+.progress>i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s ease}
+main{max-width:880px;margin:0 auto;padding:28px 16px 130px}
+.step{display:none;animation:fade .2s ease}
+.step.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.eyebrow{color:var(--muted);font-size:13px;margin:0 0 6px;letter-spacing:.02em}
+h2{font-size:clamp(22px,4vw,30px);line-height:1.25;margin:0 0 14px}
+.key{background:var(--key-bg);border-left:4px solid var(--accent);padding:12px 16px;border-radius:8px;margin:0 0 22px;font-weight:600;font-size:17px}
+.block{margin:0 0 20px}
+.block p{margin:0 0 10px}
+.block ul{margin:0;padding-left:22px}
+.codehead{font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:baseline;margin:0 0 6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.codehead b{color:var(--fg);font-weight:600;font-family:inherit}
+.codehead .tag{background:var(--code-bg);padding:1px 8px;border-radius:999px;border:1px solid var(--line)}
+pre{background:var(--code-bg);border:1px solid var(--line);padding:14px;border-radius:8px;overflow:auto;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;margin:0;tab-size:2}
+code{font:.92em ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--code-bg);padding:1px 5px;border-radius:4px}
+pre code{background:none;padding:0;font-size:inherit}
+.diff .l{display:block;white-space:pre;padding:0 6px;margin:0 -6px}
+.diff .a{background:var(--add-bg);color:var(--add-fg)}
+.diff .d{background:var(--del-bg);color:var(--del-fg)}
+.mermaid{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;overflow:auto;text-align:center}
+.mermaid svg{max-width:100%;height:auto}
+.mermaid.error pre{text-align:left}
+.files{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px}
+.files li code{padding:4px 10px}
+.qa{margin:0}
+.qa dt{font-weight:600;margin:10px 0 2px}
+.qa dt::before{content:"Q. ";color:var(--accent)}
+.qa dd{margin:0;color:var(--muted)}
+.qa dd::before{content:"A. ";color:var(--accent)}
+.evidence{font-size:13px;color:var(--muted);margin-top:26px;border-top:1px dashed var(--line);padding-top:10px}
+details.note{margin-top:14px;font-size:14px;color:var(--muted)}
+details.note summary{cursor:pointer}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.cover h2{font-size:clamp(28px,5vw,40px)}
+.cover .summary{font-size:19px;margin:0 0 26px}
+.cover .hint{color:var(--muted);font-size:14px;margin-top:26px}
+nav.bar{position:fixed;left:0;right:0;bottom:0;z-index:3;background:var(--card);border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+button{font:inherit;font-size:15px;padding:10px 18px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:disabled{opacity:.4;cursor:default;border-color:var(--line)}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);min-width:120px}
+button.ghost{padding:6px 12px;font-size:13px}
+.dots{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;flex:1}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--line);display:block;cursor:pointer}
+.dots i.on{background:var(--accent)}
+.dots i.done{background:var(--muted)}
+aside.toc{position:fixed;inset:0;z-index:4;background:rgba(0,0,0,.45);display:none}
+aside.toc.open{display:block}
+aside.toc>div{background:var(--card);width:min(380px,90vw);height:100%;padding:22px 20px;overflow:auto;box-shadow:var(--shadow)}
+aside.toc h3{margin:0 0 14px;font-size:15px}
+aside.toc ol{margin:0;padding-left:22px}
+aside.toc li{margin:0 0 10px;cursor:pointer}
+aside.toc li.on{color:var(--accent);font-weight:600}
+aside.toc small{display:block;color:var(--muted);font-weight:400}
+.kbd{font-size:12px;color:var(--muted)}
+.kbd kbd{border:1px solid var(--line);border-radius:4px;padding:0 5px;font-family:inherit}
+@media (max-width:600px){.dots{display:none}.kbd{display:none}header h1{font-size:14px}}
+</style>
+</head>
+<body>
+<header>
+  <button class="ghost" id="tocBtn" aria-label="목차 열기">☰ 목차</button>
+  <h1 id="tour-title">Walkthrough</h1>
+  <span class="counter" id="counter"></span>
+</header>
+<div class="progress"><i id="bar"></i></div>
+<main id="main"></main>
+<nav class="bar">
+  <button id="prev">← 이전</button>
+  <div class="dots" id="dots"></div>
+  <span class="kbd"><kbd>←</kbd> <kbd>→</kbd> 로 이동</span>
+  <button id="next" class="primary">다음 →</button>
+</nav>
+<aside class="toc" id="toc"><div><h3>목차</h3><ol id="tocList"></ol></div></aside>
+
+<script id="tour-data" type="application/json">
+{
+  "title": "샘플 워크스루",
+  "summary": "템플릿 동작 확인용 샘플. 이 JSON 블록 전체를 실제 장면 데이터로 바꾼다.",
+  "audience": "동료 개발자",
+  "commits": [
+    { "sha": "abc1234", "subject": "feat: 샘플 커밋 1" },
+    { "sha": "def5678", "subject": "fix: 샘플 커밋 2" }
+  ],
+  "scenes": [
+    {
+      "id": 1,
+      "title": "전체 지도",
+      "key": "요청이 캐시를 거쳐 저장소로 가도록 경로가 바뀌었다.",
+      "blocks": [
+        { "type": "text", "md": "기존에는 **모든 요청**이 DB로 바로 갔다. 이제 `Cache`를 먼저 본다." },
+        { "type": "mermaid", "code": "flowchart LR\n  A[요청] --> B[핸들러]\n  B --> C[\"Cache (신규)\"]:::changed\n  C -->|miss| D[(DB)]\n  classDef changed fill:#fde68a,color:#1a1a1a" }
+      ],
+      "evidence": ["abc1234"]
+    },
+    {
+      "id": 2,
+      "title": "캐시 조회 추가",
+      "key": "핸들러가 DB 앞에서 캐시를 먼저 조회한다.",
+      "blocks": [
+        { "type": "list", "items": ["핸들러 진입 시 `cache.get(key)` 호출", "miss일 때만 DB 조회 후 `cache.set`"] },
+        { "type": "code", "lang": "ts", "file": "src/handler.ts:10-14", "label": "before", "code": "export async function handle(req) {\n  const row = await db.find(req.id)\n  return row\n}" },
+        { "type": "diff", "file": "src/handler.ts", "code": " export async function handle(req) {\n-  const row = await db.find(req.id)\n+  const hit = await cache.get(req.id)\n+  if (hit) return hit\n+  const row = await db.find(req.id)\n+  await cache.set(req.id, row)\n   return row\n }" },
+        { "type": "files", "items": ["src/handler.ts:10", "src/cache.ts:1"] },
+        { "type": "qa", "items": [{ "q": "TTL은?", "a": "60초, cache.ts 상단 상수." }] }
+      ],
+      "evidence": ["abc1234", "def5678"],
+      "note": "여기서 TTL 질문이 나오면 3번 장면으로 넘긴다."
+    },
+    {
+      "id": 3,
+      "title": "검증과 남은 일",
+      "key": "단위 테스트 2개 추가, 무효화 전략은 후속.",
+      "blocks": [
+        { "type": "list", "items": ["`npm test` 통과", "남은 일: 쓰기 시 캐시 무효화"] }
+      ],
+      "evidence": ["def5678"]
+    }
+  ]
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById('tour-data').textContent);
+  var scenes = data.scenes || [];
+  var total = scenes.length + 1; // cover + scenes
+  var $ = function (id) { return document.getElementById(id); };
+  var isDark = function () {
+    var t = document.documentElement.getAttribute('data-theme');
+    if (t) return t === 'dark';
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  };
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function md(s) {
+    return esc(s)
+      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\n/g, '<br>');
+  }
+  function codeHead(b) {
+    var parts = [];
+    if (b.label) parts.push('<span class="tag">' + esc(b.label) + '</span>');
+    if (b.file) parts.push('<b>' + esc(b.file) + '</b>');
+    if (b.lang) parts.push('<span>' + esc(b.lang) + '</span>');
+    return parts.length ? '<div class="codehead">' + parts.join('') + '</div>' : '';
+  }
+  function renderBlock(b) {
+    switch (b.type) {
+      case 'text':
+        return '<div class="block"><p>' + md(b.md) + '</p></div>';
+      case 'list':
+        return '<div class="block"><ul>' + (b.items || []).map(function (i) { return '<li>' + md(i) + '</li>'; }).join('') + '</ul></div>';
+      case 'code':
+        return '<div class="block">' + codeHead(b) + '<pre><code>' + esc(b.code) + '</code></pre></div>';
+      case 'diff':
+        return '<div class="block">' + codeHead(b) + '<pre class="diff">' + String(b.code || '').split('\n').map(function (l) {
+          var cls = l.charAt(0) === '+' ? 'l a' : l.charAt(0) === '-' ? 'l d' : 'l';
+          return '<span class="' + cls + '">' + esc(l) + '</span>';
+        }).join('') + '</pre></div>';
+      case 'mermaid':
+        return '<div class="block"><div class="mermaid" data-pending><pre>' + esc(b.code) + '</pre></div></div>';
+      case 'files':
+        return '<div class="block"><ul class="files">' + (b.items || []).map(function (i) { return '<li><code>' + esc(i) + '</code></li>'; }).join('') + '</ul></div>';
+      case 'qa':
+        return '<div class="block"><dl class="qa">' + (b.items || []).map(function (i) { return '<dt>' + md(i.q) + '</dt><dd>' + md(i.a) + '</dd>'; }).join('') + '</dl></div>';
+      default:
+        return '<div class="block"><pre>' + esc(JSON.stringify(b, null, 2)) + '</pre></div>';
+    }
+  }
+  function renderCover() {
+    var rows = (data.commits || []).map(function (c) {
+      return '<tr><td><code>' + esc(c.sha) + '</code></td><td>' + esc(c.subject) + '</td></tr>';
+    }).join('');
+    return '<section class="step cover" data-i="0">' +
+      '<p class="eyebrow">Walkthrough' + (data.audience ? ' · ' + esc(data.audience) : '') + '</p>' +
+      '<h2>' + esc(data.title) + '</h2>' +
+      '<p class="summary">' + md(data.summary) + '</p>' +
+      (rows ? '<table><thead><tr><th>커밋</th><th>제목</th></tr></thead><tbody>' + rows + '</tbody></table>' : '') +
+      '<p class="hint">장면 ' + scenes.length + '개 · 「다음 →」 또는 → 키로 시작</p>' +
+      '</section>';
+  }
+  function renderScene(s, idx) {
+    var body = (s.blocks || []).map(renderBlock).join('');
+    var ev = (s.evidence && s.evidence.length) ? '<div class="evidence">근거 커밋: ' + s.evidence.map(function (e) { return '<code>' + esc(e) + '</code>'; }).join(' ') + '</div>' : '';
+    var note = s.note ? '<details class="note"><summary>발표자 메모</summary><p>' + md(s.note) + '</p></details>' : '';
+    return '<section class="step" data-i="' + (idx + 1) + '">' +
+      '<p class="eyebrow">장면 ' + esc(s.id != null ? s.id : idx + 1) + ' / ' + scenes.length + '</p>' +
+      '<h2>' + esc(s.title) + '</h2>' +
+      (s.key ? '<div class="key">' + md(s.key) + '</div>' : '') +
+      body + ev + note + '</section>';
+  }
+
+  $('tour-title').textContent = data.title || 'Walkthrough';
+  document.title = data.title || document.title;
+  $('main').innerHTML = renderCover() + scenes.map(renderScene).join('');
+  $('dots').innerHTML = Array.apply(null, { length: total }).map(function (_, i) { return '<i data-i="' + i + '" title="' + (i === 0 ? '표지' : esc(scenes[i - 1].title)) + '"></i>'; }).join('');
+  $('tocList').innerHTML = scenes.map(function (s, i) {
+    return '<li data-i="' + (i + 1) + '">' + esc(s.title) + (s.key ? '<small>' + esc(s.key) + '</small>' : '') + '</li>';
+  }).join('');
+
+  var steps = Array.prototype.slice.call(document.querySelectorAll('.step'));
+  var dots = Array.prototype.slice.call(document.querySelectorAll('.dots i'));
+  var tocItems = Array.prototype.slice.call(document.querySelectorAll('#tocList li'));
+  var cur = 0;
+
+  function runMermaid(el) {
+    var pend = Array.prototype.slice.call(el.querySelectorAll('.mermaid[data-pending]'));
+    if (!pend.length) return;
+    pend.forEach(function (n) {
+      var code = n.querySelector('pre').textContent;
+      n.removeAttribute('data-pending');
+      if (typeof mermaid === 'undefined') { n.classList.add('error'); return; }
+      n.textContent = code;
+      mermaid.run({ nodes: [n] }).catch(function () {
+        n.classList.add('error');
+        n.innerHTML = '<pre>' + esc(code) + '</pre>';
+      });
+    });
+  }
+
+  function go(i) {
+    if (i < 0 || i >= total) return;
+    cur = i;
+    steps.forEach(function (s, k) { s.classList.toggle('active', k === i); });
+    dots.forEach(function (d, k) { d.classList.toggle('on', k === i); d.classList.toggle('done', k < i); });
+    tocItems.forEach(function (t, k) { t.classList.toggle('on', k + 1 === i); });
+    $('bar').style.width = (total > 1 ? (i / (total - 1)) * 100 : 100) + '%';
+    $('counter').textContent = i === 0 ? '표지' : i + ' / ' + scenes.length;
+    $('prev').disabled = i === 0;
+    $('next').textContent = i === total - 1 ? '끝' : (i === 0 ? '시작 →' : '다음 →');
+    $('next').disabled = i === total - 1;
+    runMermaid(steps[i]);
+    window.scrollTo(0, 0);
+    if (history.replaceState) history.replaceState(null, '', '#' + i);
+  }
+
+  $('prev').onclick = function () { go(cur - 1); };
+  $('next').onclick = function () { go(cur + 1); };
+  $('tocBtn').onclick = function () { $('toc').classList.add('open'); };
+  $('toc').onclick = function (e) {
+    var li = e.target.closest ? e.target.closest('li') : null;
+    if (li) go(+li.getAttribute('data-i'));
+    if (li || e.target === $('toc')) $('toc').classList.remove('open');
+  };
+  $('dots').onclick = function (e) { if (e.target.tagName === 'I') go(+e.target.getAttribute('data-i')); };
+  document.addEventListener('keydown', function (e) {
+    if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(cur + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+    else if (e.key === 'Home') { go(0); }
+    else if (e.key === 'End') { go(total - 1); }
+    else if (e.key === 'Escape') { $('toc').classList.remove('open'); }
+  });
+
+  if (typeof mermaid !== 'undefined') {
+    mermaid.initialize({ startOnLoad: false, theme: isDark() ? 'dark' : 'default', securityLevel: 'loose' });
+  }
+  var start = parseInt((location.hash || '#0').slice(1), 10);
+  go(isNaN(start) ? 0 : Math.min(Math.max(start, 0), total - 1));
+})();
+</script>
+</body>
+</html>

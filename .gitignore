@@ -11,6 +11,7 @@ saju-*.html
 *.html
 saju-*.png
 !skills/saju/references/saju-report-template.html
+!skills/walkthrough/reference/tour-template.html
 *command-message*.txt
 
 # 개인 전용 스킬 (git에 올리지 않음, cdragon에는 정상 노출)

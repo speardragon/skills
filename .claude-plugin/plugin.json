@@ -23,6 +23,7 @@
     "./skills/to-tickets",
     "./skills/to-spec",
     "./skills/unknowns",
+    "./skills/walkthrough",
     "./skills/writing-great-skills"
   ]
 }
