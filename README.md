@@ -37,6 +37,7 @@
 | `to-tickets`               | 계획·스펙·대화를 blocking 관계가 있는 티켓으로 분해           |
 | `to-spec`                  | 현재 대화를 스펙으로 정리해 이슈 트래커에 발행                |
 | `unknowns`                 | 작업 착수 전 map/territory 갭(모르는 것)을 구조적으로 발견    |
+| `walkthrough`              | 커밋 범위를 남에게 설명하는 자료로 — 발표용 .md + 대본 세트, 또는 다음 버튼 HTML 투어 |
 | `writing-great-skills`     | 스킬을 예측 가능하게 작성·편집하기 위한 원칙·어휘 레퍼런스     |
 
 ## Install (Claude Code plugin)
@@ -140,6 +141,33 @@ cdragon --global --all-targets tdd grill-me # ~/.claude, ~/.agents, ~/.gemini �
 같은 대상을 가리키는 심링크는 그대로 두고, 다른 곳을 가리키면 다시 연결합니다. 이미 존재하는 **실제 디렉터리**(예전에 복사 방식으로 설치된 스킬)는 기본적으로 건너뛰지만, 대화형에서는 교체 여부를 물어보고 `--force`를 주면 바로 교체합니다. 교체 시 원본 폴더는 삭제하지 않고 같은 위치의 `skills-backup/`으로 옮겨둡니다.
 
 `unlink`은 이 레포를 가리키는 심링크만 지웁니다 — 실제 폴더나 다른 곳을 가리키는 링크는 건드리지 않습니다. `prune`은 레포에서 삭제·개명된 스킬의 깨진 링크만 정리합니다. `cdragon status`는 그런 고아 링크를 하단에 표시합니다.
+
+### 공통 전역 지시 파일
+
+`instructions/AGENTS.md` 하나를 원본으로 관리하고 각 도구의 전역 지시 경로에 파일 심링크를 연결할 수 있습니다. 현재 원본은 기존 `~/.claude/CLAUDE.md`의 내용을 그대로 가져왔습니다.
+
+```bash
+cdragon instructions status --offline
+cdragon instructions link --global --all-targets --force -y
+cdragon instructions unlink --codex -y
+# 별도 개인 원본을 사용할 경우 (link/status/unlink에 같은 --source 사용)
+cdragon instructions link --source /absolute/path/to/AGENTS.md --all-targets -y
+```
+
+| 도구 | 전역 지시 경로 |
+| --- | --- |
+| Claude Code | `~/.claude/CLAUDE.md` |
+| Codex | `~/.codex/AGENTS.md` |
+| Antigravity | `~/.gemini/GEMINI.md` |
+| Grok Build | `~/.grok/AGENTS.md` 또는 Claude 전역 파일을 통한 공유 |
+
+`--claude`, `--codex`, `--gemini`, `--grok`으로 대상을 선택합니다. 기본은 모든 도구이고 지시 파일 명령은 **전역 scope만 지원**합니다. 스킬용 `--agents`와는 별도 매핑입니다. 원본을 수정하면 다음 세션에서 변경된 지시를 읽습니다.
+
+기존 파일이나 다른 원본을 가리키는 링크는 기본적으로 유지합니다. `--force`로 교체하면 해당 도구 폴더의 `instructions-backup/`에 기존 항목을 보존하고, 백업 이름이 겹치면 숫자를 붙입니다. `unlink`는 선택한 원본으로 연결된 심링크만 제거하며 백업 복원은 직접 수행합니다.
+
+Grok Build는 Claude의 전역 지시도 읽으므로 `~/.claude/CLAUDE.md`가 같은 원본으로 연결돼 있으면 Grok 전용 링크 생성을 생략하고 `inherited`로 표시합니다. 이 경우 Grok의 공유 지시는 Claude 링크에 의존합니다. Codex에 `~/.codex/AGENTS.override.md`가 있으면 공통 파일보다 우선하므로 경고합니다.
+
+git checkout에서는 이 레포의 원본을 사용합니다. npm/npx 설치에서는 스킬과 같은 미러를 사용하고, 미러에 지시 파일이 없으면 패키지에 포함된 원본을 사용합니다. 개인 지시를 따로 관리하려면 `--source`로 고정된 파일을 지정하세요.
 
 ### 스킬 최신화
 

@@ -31,6 +31,37 @@ test('non-TTY: -y links a fresh target successfully', () => {
   assert.ok(fs.lstatSync(link).isSymbolicLink())
 })
 
+test('instructions CLI links global files, reports Grok inheritance and unlinks safely', () => {
+  const source = path.join(tmp, 'common.md')
+  fs.writeFileSync(source, 'Shared instructions\n')
+  const args = ['--source', source, '--offline']
+  const linked = run(['instructions', 'link', '--all-targets', '-y', ...args], { HOME: tmp })
+  assert.equal(linked.status, 0, linked.stderr)
+  for (const target of ['.claude/CLAUDE.md', '.codex/AGENTS.md', '.gemini/GEMINI.md']) {
+    assert.equal(fs.readlinkSync(path.join(tmp, target)), source)
+  }
+  assert.match(linked.stdout, /grok: inherited/)
+  assert.ok(!fs.existsSync(path.join(tmp, '.grok/AGENTS.md')))
+  const status = run(['instructions', 'status', ...args], { HOME: tmp })
+  assert.equal(status.status, 0, status.stderr)
+  assert.match(status.stdout, /codex: linked/)
+  const unlinked = run(['instructions', 'unlink', '--codex', '-y', ...args], { HOME: tmp })
+  assert.equal(unlinked.status, 0, unlinked.stderr)
+  assert.ok(!fs.existsSync(path.join(tmp, '.codex/AGENTS.md')))
+  assert.ok(fs.lstatSync(path.join(tmp, '.claude/CLAUDE.md')).isSymbolicLink())
+})
+
+test('instructions rejects project scope and warns about Codex overrides', () => {
+  const rejected = run(['instructions', 'link', '--project', '-y'], { HOME: tmp })
+  assert.notEqual(rejected.status, 0)
+  assert.match(rejected.stderr, /global scope only/)
+  fs.mkdirSync(path.join(tmp, '.codex'))
+  fs.writeFileSync(path.join(tmp, '.codex/AGENTS.override.md'), 'Override')
+  const status = run(['instructions', 'status', '--codex', '--offline'], { HOME: tmp })
+  assert.equal(status.status, 0, status.stderr)
+  assert.match(status.stdout, /takes precedence/)
+})
+
 test('--gemini -g links into ~/.gemini/skills (global scope)', () => {
   const r = run(['-g', '--gemini', 'tdd', '-y'], { HOME: tmp })
   assert.equal(r.status, 0, r.stderr)

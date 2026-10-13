@@ -97,6 +97,9 @@ ${c.bold('Usage')}
   cdragon prune              Remove orphaned links (skills deleted/renamed in the repo)
   cdragon list            List available skills
   cdragon help            Show this help
+  cdragon instructions link|status|unlink  Manage shared global instruction files
+      --claude --codex --gemini --grok --all-targets
+      --source PATH --force -y --offline --refresh
 
 ${c.bold('Flags')} ${c.dim('(skip the matching prompt)')}
   -p, --project           Link into the current directory ${c.dim('(default prompt)')}
@@ -424,6 +427,7 @@ async function main() {
 
   if (cmd === 'help' || argv.includes('--help') || argv.includes('-h')) return help()
   if (argv.includes('--version') || argv.includes('-v')) return console.log(pkg.version)
+  if (cmd === 'instructions') return require('../src/instructions').instructionsCommand(argv.slice(1))
   if (cmd === 'list' || cmd === 'ls') return listSkills(syncOpts)
   if (cmd === 'status' || cmd === 'st') return statusCommand(syncOpts)
   if (cmd === 'unlink' || cmd === 'rm') {
