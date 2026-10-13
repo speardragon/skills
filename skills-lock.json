@@ -13,6 +13,12 @@
       "skillPath": "skills/agent-browser/SKILL.md",
       "computedHash": "ecc7641aea05f85ca3b11e7759d32aaf52fe05946ab4b63739c7bf78a41237a2"
     },
+    "aside-browser": {
+      "source": "aside.com",
+      "sourceType": "cli",
+      "skillPath": "aside guide (CLI 1.26.1010.1739, skill v3)",
+      "computedHash": "6da78494db6b2ba6088121ac4dd691173d1782966d68b1c6208c1e713ccdcd69"
+    },
     "brainstorming": {
       "source": "obra/superpowers",
       "sourceType": "github",
