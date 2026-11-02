@@ -6,6 +6,7 @@
   "keywords": ["skills", "productivity", "engineering", "tdd", "spec", "tickets"],
   "skills": [
     "./skills/agent-browser",
+    "./skills/agent-desktop",
     "./skills/deploy",
     "./skills/grill-me",
     "./skills/grilling",

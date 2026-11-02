@@ -13,6 +13,12 @@
       "skillPath": "skills/agent-browser/SKILL.md",
       "computedHash": "ecc7641aea05f85ca3b11e7759d32aaf52fe05946ab4b63739c7bf78a41237a2"
     },
+    "agent-desktop": {
+      "source": "vercel-labs/agent-desktop",
+      "sourceType": "github",
+      "skillPath": "skills/agent-desktop/SKILL.md",
+      "computedHash": "1bbac8bc47718967a3929627698c8d2f1630cf88b4382ccc24f97683a86affae"
+    },
     "aside-browser": {
       "source": "aside.com",
       "sourceType": "cli",

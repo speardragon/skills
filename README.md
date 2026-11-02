@@ -13,6 +13,7 @@
 | `adhd`                     | 병렬 발산 아이디에이션 — 격리된 인지 프레임 5개로 발산 후 수렴 |
 | `adopt-skill`              | 외부 스킬 편입 — 보안 감사 통과 후 `skills-lock.json`·README 갱신 |
 | `agent-browser`            | AI 에이전트용 브라우저 자동화 CLI                             |
+| `agent-desktop`            | 접근성 트리 기반 데스크톱 앱(macOS·Windows·Linux) 조작 CLI 가이드 |
 | `aside-browser`            | Aside AI 브라우저 제어 — 로그인된 사이트 작업·메모리 조회 (`aside` CLI) |
 | `deploy`                   | Vercel 프로덕션/프리뷰 배포                                   |
 | `grill-me`                 | 계획·설계를 끝까지 캐묻는 인터뷰 (`grilling` 실행용 별칭)     |
@@ -214,6 +215,7 @@ cd skills
 
 - `grill-me`, `to-tickets`, `to-spec`, `tdd`, `setup-matt-pocock-skills`, `writing-great-skills` — [mattpocock/skills](https://github.com/mattpocock/skills) (MIT)
 - `agent-browser` — [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)
+- `agent-desktop` — [vercel-labs/agent-desktop](https://github.com/vercel-labs/agent-desktop) (Apache-2.0)
 - `aside-browser` — [Aside](https://aside.com) CLI `aside guide` 출력 고정본 (별도 라이선스 명시 없음, GitHub 저장소 없음)
 - `i-have-adhd` — [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) (MIT)
 - `adhd` — [UditAkhourii/adhd](https://github.com/UditAkhourii/adhd) (MIT)
