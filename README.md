@@ -33,6 +33,7 @@
 | `review-respond`           | PR 리뷰 코멘트 대응 — 코드로 검증 → 수정 → 답글 → resolve    |
 | `setup`                    | Vercel CLI 설치·로그인·프로젝트 연결·환경변수 설정            |
 | `setup-matt-pocock-skills` | 엔지니어링 스킬용 이슈 트래커·트리아지 설정                   |
+| `stack-diagram`            | 기술 스택·시스템 아키텍처를 브랜드 로고 기반 다이어그램(HTML/PNG/TSX)으로 생성 |
 | `supabase`                 | Supabase 작업 전반 — 최신 문서 확인·RLS/Auth 보안 체크리스트·CLI/MCP·마이그레이션 |
 | `supabase-postgres-best-practices` | Supabase가 관리하는 Postgres 모범 사례 (8개 카테고리 — 쿼리·커넥션·RLS·스키마 등) |
 | `tdd`                      | red-green-refactor 기반 테스트 주도 개발                      |
@@ -220,6 +221,7 @@ cd skills
 - `korean-nominal-style` — [hmu332233/skills](https://github.com/hmu332233/skills) (별도 라이선스 명시 없음, 원작자 확인 후 편입)
 - `react-best-practices` — [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) (MIT)
 - `deploy`, `logs`, `setup` — [vercel/vercel-deploy-claude-code-plugin](https://github.com/vercel/vercel-deploy-claude-code-plugin) (MIT)
+- `stack-diagram` — [caru-ini/stack-diagram](https://github.com/caru-ini/stack-diagram) (MIT, 번들 폰트는 SIL OFL 1.1)
 - `supabase`, `supabase-postgres-best-practices` — [supabase/agent-skills](https://github.com/supabase/agent-skills) (MIT)
 
 스킬은 [vercel `skills` CLI](https://github.com/vercel-labs/agent-skills)로 관리되며, 출처는 `skills-lock.json`에 기록됩니다.

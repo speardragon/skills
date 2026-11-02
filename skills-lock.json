@@ -175,6 +175,12 @@
       "skillPath": "skills/engineering/setup-matt-pocock-skills/SKILL.md",
       "computedHash": "74e894a3509e2676d4cdb771c8eace087092430635e845e02a9cc2f757c552a4"
     },
+    "stack-diagram": {
+      "source": "caru-ini/stack-diagram",
+      "sourceType": "github",
+      "skillPath": "skills/stack-diagram/SKILL.md",
+      "computedHash": "c7b6d83c9b0629879ca0679715a09d9c91078d2ec71ce5720ff8d07d583fda19"
+    },
     "subagent-driven-development": {
       "source": "obra/superpowers",
       "sourceType": "github",
